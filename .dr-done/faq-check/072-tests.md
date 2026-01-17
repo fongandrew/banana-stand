@@ -1,0 +1,1 @@
+The test created in dr-done-multi does not appear to actually test the actual plugin. We should call `claude` with `--plugin-dir` per https://code.claude.com/docs/en/plugins and actually exercise the real plugin code.
