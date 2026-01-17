@@ -10,7 +10,17 @@ Create a new FAQ entry for automatic error/output matching.
 
 ## Instructions
 
-When the user invokes this command, guide them through creating a new FAQ entry:
+When the user invokes this command, guide them through creating a new FAQ entry.
+
+### Step 0: Initialize FAQ directory (if needed)
+
+Before starting, check if the `.faq-check` directory exists in the project root. If it does not exist:
+
+1. Create the `.faq-check` directory
+2. Copy the README template from `plugins/faq-check/templates/README.md` to `.faq-check/README.md`
+3. Inform the user: "I've created the `.faq-check` directory and added a README with documentation on the FAQ format."
+
+Then proceed with the FAQ creation:
 
 ### Step 1: Gather trigger patterns
 
