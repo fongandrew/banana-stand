@@ -2,7 +2,7 @@
 # PreToolUse hook for dr-done
 # Denies permission requests when running in autonomous dr-done mode
 
-DR_DONE_CONFIG=".claude/dr-done.local.yaml"
+DR_DONE_CONFIG="$CLAUDE_PROJECT_DIR/.claude/dr-done.local.yaml"
 
 # If dr-done config doesn't exist, this is not an autonomous loop - no-op
 if [[ ! -f "$DR_DONE_CONFIG" ]]; then
