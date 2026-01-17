@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": {
+          "tool_name": "Bash"
+        },
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/post-tool-use.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
