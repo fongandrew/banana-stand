@@ -148,7 +148,8 @@ while [[ $ITERATION -lt $MAX_ITERATIONS ]]; do
 
     # Run claude with the dr-done prompt
     # Using --print for non-interactive mode, --dangerously-skip-permissions to avoid prompts
-    if ! "$CLAUDE_CMD" --print --dangerously-skip-permissions \
+    # Using --verbose to show intermediate output (tool calls, etc.)
+    if ! "$CLAUDE_CMD" --print --verbose --dangerously-skip-permissions \
         "Follow the instructions in .dr-done/prompt.md to process the next task in the workstream." \
         2>&1; then
         echo "Claude command failed on iteration $ITERATION"
