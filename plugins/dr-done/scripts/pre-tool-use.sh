@@ -20,7 +20,7 @@ DISABLE_SANDBOX=$(echo "$INPUT" | jq -r '.tool_input.dangerouslyDisableSandbox /
 if [[ "$TOOL_NAME" == "Bash" ]] && [[ "$DISABLE_SANDBOX" == "true" ]]; then
     cat << 'EOF'
 {
-  "decision": "deny",
+  "decision": "block",
   "reason": "This dr-done loop is running autonomously and cannot request permissions.\n\nThe command you're trying to run requires unsandboxed bash. Please:\n1. Try running the command WITHOUT dangerouslyDisableSandbox - sandboxed bash may work\n2. If sandboxed bash fails, check .claude/settings.json or .claude/settings.local.json for allowlisted paths\n3. If this command is truly required and cannot be sandboxed, mark this task as .stuck.md with an explanation"
 }
 EOF
