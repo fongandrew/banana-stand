@@ -13,11 +13,11 @@ dr-done enables autonomous task processing by organizing work into named workstr
   prompt.md          # Sub-agent instructions (do not modify)
   README.md          # This file
   {workstream}/      # Workstream directories
+    000-init.done.md     # Initial task (see below)
     100-first-task.md
     200-second-task.md
     300-completed.done.md
     400-blocked.stuck.md
-    init.done.md     # Initial task (see below)
 ```
 
 ## Task File Conventions
@@ -30,14 +30,14 @@ dr-done enables autonomous task processing by organizing work into named workstr
 ## Creating a New Workstream
 
 1. Create a directory under `.dr-done/` with your workstream name (use kebab-case)
-2. Add a single `init.md` markdown files with the initial task description. It will be up to do the sub-agent to decompose this into numbered subtasks.
+2. Add a single `000-init.md` markdown files with the initial task description. It will be up to do the sub-agent to decompose this into numbered subtasks.
 
 Example:
 
 ```
 .dr-done/
   my-feature/
-    init.md
+    000-init.md
 ```
 
 ## Starting a Workstream

@@ -22,7 +22,8 @@ Read the task file and decide if it is:
 1. Break the task into smaller, actionable sub-tasks
 2. Create new markdown files for each sub-task in the same workstream directory
 3. Use sequential numbering based on the parent task's number:
-   - If decomposing `100-big-feature.md`, create `101-first-step.md`, `102-second-step.md`, etc.
+   - If decomposing `100-big-feature.md`, create `110-first-step.md`, `120-second-step.md`, etc.
+   - When starting out, increment steps by jumps such as 10 to allow "room" for further decomposition if needed.
    - If there are numbering conflicts, rename/reorder existing files to maintain sensible order
 4. Append a concise summary of the decomposition to the original task file
 5. Rename the original task to have a `.done.md` extension
@@ -49,8 +50,6 @@ Read the task file and decide if it is:
 
 - Always commit your work before stopping
 - Keep summaries concise
+- If needed, read earlier `.done.md` or `.stuck.md` task files in the workstream for context.
 - One task per iteration - do not try to do multiple tasks
 - The stop hooks will automatically trigger the next iteration
-- Only stage and commit files related to the current workstream
-- Do not stage or commit files in `.dr-done/` directories other than the active workstream
-- If you notice changes in other `.dr-done/` directories, leave them unstaged
