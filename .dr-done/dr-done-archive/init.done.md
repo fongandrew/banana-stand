@@ -89,3 +89,15 @@ When the user invokes this command:
 - No hook or script needed - the command instructions are simple enough to execute directly
 - Users can manually restore archived workstreams with: `mv .dr-done/.archive/<workstream> .dr-done/`
 ```
+
+---
+
+## Completion Summary
+
+Created `/dr-done:archive` command at `plugins/dr-done/commands/archive.md`. The command:
+- Validates workstream existence before archiving
+- Warns about incomplete tasks (non-.done.md/.stuck.md files) but doesn't block
+- Creates `.dr-done/.archive/` directory if needed
+- Moves the workstream directory to the archive
+- Commits with `[dr-done] Archive <workstream-slug>` message
+- Confirms success to the user
