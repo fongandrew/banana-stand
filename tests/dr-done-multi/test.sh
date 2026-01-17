@@ -95,24 +95,148 @@ echo "OK: init.md mentions impossible task"
 echo ""
 echo "Phase 1 PASSED: Setup verification complete"
 echo ""
-echo "=== Test Summary ==="
-echo "This test verifies that the dr-done test case is correctly set up."
-echo "The test case is ready for dr-done execution."
+
+echo "Phase 2: Execute dr-done workstream"
+echo "===================================="
+
+# Run claude with the dr-done prompt - let it iterate until workstream is complete
+# We use --print to capture output and avoid interactive mode
+# The dr-done agent will loop until all tasks are done/stuck
+
+MAX_ITERATIONS=10
+ITERATION=0
+
+while [[ $ITERATION -lt $MAX_ITERATIONS ]]; do
+    ((ITERATION++))
+    echo "Iteration $ITERATION of $MAX_ITERATIONS"
+
+    # Check if there are any pending tasks left
+    PENDING=$(find "$TEST_TMP/.dr-done/testwork" -maxdepth 1 -name "*.md" \
+        ! -name "*.done.md" \
+        ! -name "*.stuck.md" \
+        2>/dev/null | wc -l | tr -d ' ')
+
+    if [[ "$PENDING" -eq 0 ]]; then
+        echo "No more pending tasks - workstream complete"
+        break
+    fi
+
+    echo "Found $PENDING pending task(s)"
+
+    # Run claude with the dr-done prompt
+    # Using --print for non-interactive mode, --dangerously-skip-permissions to avoid prompts
+    if ! claude --print --dangerously-skip-permissions \
+        "Follow the instructions in .dr-done/prompt.md to process the next task in the workstream." \
+        2>&1; then
+        echo "Claude command failed on iteration $ITERATION"
+        exit 1
+    fi
+
+    echo "Iteration $ITERATION complete"
+    echo ""
+done
+
+if [[ $ITERATION -ge $MAX_ITERATIONS ]]; then
+    echo "WARNING: Reached max iterations ($MAX_ITERATIONS)"
+fi
+
 echo ""
-echo "To run dr-done on this test case manually:"
-echo "  1. cd $TEST_TMP"
-echo "  2. Run claude with the dr-done prompt"
+echo "Phase 2 PASSED: dr-done workstream executed"
 echo ""
-echo "Expected final state after dr-done completes:"
-echo "  Files:"
-echo "    - .dr-done/testwork/init.done.md"
-echo "    - .dr-done/testwork/101-*.done.md"
-echo "    - .dr-done/testwork/102-*.done.md"
-echo "    - .dr-done/testwork/103-*.stuck.md"
-echo "    - hello.txt (content: 'Hello from dr-done!')"
-echo "    - goodbye.txt (content: 'Goodbye from dr-done!')"
-echo "  Git commits:"
-echo "    - [done] testwork/init.md - decomposed into subtasks"
-echo "    - [done] testwork/101-*.md - created hello.txt"
-echo "    - [done] testwork/102-*.md - created goodbye.txt"
-echo "    - [stuck] testwork/103-*.md - impossible task"
+
+echo "Phase 3: Verify expected outcomes"
+echo "=================================="
+
+# Verify init.done.md exists
+if [[ ! -f "$TEST_TMP/.dr-done/testwork/init.done.md" ]]; then
+    echo "FAIL: init.done.md not found"
+    ls -la "$TEST_TMP/.dr-done/testwork/"
+    exit 1
+fi
+echo "OK: init.done.md exists"
+
+# Verify at least one 101-*.done.md exists (hello.txt task)
+HELLO_TASK=$(find "$TEST_TMP/.dr-done/testwork" -name "101-*.done.md" | head -1)
+if [[ -z "$HELLO_TASK" ]]; then
+    echo "FAIL: No 101-*.done.md task found"
+    ls -la "$TEST_TMP/.dr-done/testwork/"
+    exit 1
+fi
+echo "OK: 101-*.done.md exists: $(basename "$HELLO_TASK")"
+
+# Verify at least one 102-*.done.md exists (goodbye.txt task)
+GOODBYE_TASK=$(find "$TEST_TMP/.dr-done/testwork" -name "102-*.done.md" | head -1)
+if [[ -z "$GOODBYE_TASK" ]]; then
+    echo "FAIL: No 102-*.done.md task found"
+    ls -la "$TEST_TMP/.dr-done/testwork/"
+    exit 1
+fi
+echo "OK: 102-*.done.md exists: $(basename "$GOODBYE_TASK")"
+
+# Verify at least one 103-*.stuck.md exists (impossible task)
+STUCK_TASK=$(find "$TEST_TMP/.dr-done/testwork" -name "103-*.stuck.md" | head -1)
+if [[ -z "$STUCK_TASK" ]]; then
+    echo "FAIL: No 103-*.stuck.md task found"
+    ls -la "$TEST_TMP/.dr-done/testwork/"
+    exit 1
+fi
+echo "OK: 103-*.stuck.md exists: $(basename "$STUCK_TASK")"
+
+# Verify hello.txt exists and has correct content
+if [[ ! -f "$TEST_TMP/hello.txt" ]]; then
+    echo "FAIL: hello.txt not found"
+    exit 1
+fi
+HELLO_CONTENT=$(cat "$TEST_TMP/hello.txt")
+if [[ "$HELLO_CONTENT" != "Hello from dr-done!" ]]; then
+    echo "FAIL: hello.txt has wrong content: '$HELLO_CONTENT'"
+    exit 1
+fi
+echo "OK: hello.txt exists with correct content"
+
+# Verify goodbye.txt exists and has correct content
+if [[ ! -f "$TEST_TMP/goodbye.txt" ]]; then
+    echo "FAIL: goodbye.txt not found"
+    exit 1
+fi
+GOODBYE_CONTENT=$(cat "$TEST_TMP/goodbye.txt")
+if [[ "$GOODBYE_CONTENT" != "Goodbye from dr-done!" ]]; then
+    echo "FAIL: goodbye.txt has wrong content: '$GOODBYE_CONTENT'"
+    exit 1
+fi
+echo "OK: goodbye.txt exists with correct content"
+
+# Verify git commits were made with expected patterns
+COMMITS=$(git -C "$TEST_TMP" log --oneline)
+if ! echo "$COMMITS" | grep -q "\[done\].*init"; then
+    echo "FAIL: Missing commit for init task decomposition"
+    echo "Commits: $COMMITS"
+    exit 1
+fi
+echo "OK: Found commit for init task"
+
+if ! echo "$COMMITS" | grep -q "\[done\].*101"; then
+    echo "FAIL: Missing commit for 101 task"
+    echo "Commits: $COMMITS"
+    exit 1
+fi
+echo "OK: Found commit for 101 task"
+
+if ! echo "$COMMITS" | grep -q "\[done\].*102"; then
+    echo "FAIL: Missing commit for 102 task"
+    echo "Commits: $COMMITS"
+    exit 1
+fi
+echo "OK: Found commit for 102 task"
+
+if ! echo "$COMMITS" | grep -q "\[stuck\].*103"; then
+    echo "FAIL: Missing commit for 103 stuck task"
+    echo "Commits: $COMMITS"
+    exit 1
+fi
+echo "OK: Found commit for 103 stuck task"
+
+echo ""
+echo "Phase 3 PASSED: All verifications complete"
+echo ""
+echo "=== Test PASSED ==="
