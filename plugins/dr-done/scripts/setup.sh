@@ -62,6 +62,18 @@ if [[ ! -f "$PROMPT_FILE" ]]; then
     fi
 fi
 
+# Copy README template if it doesn't exist
+README_FILE="$DR_DONE_DIR/README.md"
+if [[ ! -f "$README_FILE" ]]; then
+    README_TEMPLATE="$CLAUDE_PLUGIN_ROOT/templates/README.md"
+    if [[ -f "$README_TEMPLATE" ]]; then
+        cp "$README_TEMPLATE" "$README_FILE"
+        echo "Copied README template to .dr-done/README.md"
+    else
+        echo "Warning: README template not found at $README_TEMPLATE" >&2
+    fi
+fi
+
 # If no workstream specified, just do setup and exit
 if [[ -z "$WORKSTREAM" ]]; then
     echo "Setup complete. No workstream specified."
