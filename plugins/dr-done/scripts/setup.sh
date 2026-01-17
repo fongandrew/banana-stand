@@ -98,5 +98,27 @@ iteration: 1
 workstream: $WORKSTREAM
 EOF
 
+# Ensure dr-done.local.yaml is gitignored
+GITIGNORE_FILE="$CLAUDE_DIR/.gitignore"
+GITIGNORE_ENTRY="dr-done.local.yaml"
+
+# Check if git would track the file
+if ! git check-ignore -q "$STATE_FILE" 2>/dev/null; then
+    # File is not ignored, need to add to .gitignore
+    if [[ ! -f "$GITIGNORE_FILE" ]]; then
+        # Create .claude/.gitignore with the entry
+        echo "$GITIGNORE_ENTRY" > "$GITIGNORE_FILE"
+        git add "$GITIGNORE_FILE"
+        git commit -m "[dr-done] Ignore dr-done.local.yaml"
+        echo "Created .claude/.gitignore to ignore dr-done.local.yaml"
+    elif ! grep -qxF "$GITIGNORE_ENTRY" "$GITIGNORE_FILE"; then
+        # .gitignore exists but doesn't contain the entry
+        echo "$GITIGNORE_ENTRY" >> "$GITIGNORE_FILE"
+        git add "$GITIGNORE_FILE"
+        git commit -m "[dr-done] Ignore dr-done.local.yaml"
+        echo "Added dr-done.local.yaml to .claude/.gitignore"
+    fi
+fi
+
 echo "dr-done initialized for workstream: $WORKSTREAM (max $MAX_ITERATIONS iterations)"
 echo "State file created at: $STATE_FILE"
