@@ -101,9 +101,17 @@ echo "===================================="
 
 # Check if claude CLI is available
 # The CLAUDE_PATH env var can be set to override the default 'claude' command
-CLAUDE_CMD="${CLAUDE_PATH:-claude}"
+# Also check common installation location since 'claude' is often a shell alias
+CLAUDE_CMD="${CLAUDE_PATH:-}"
+if [[ -z "$CLAUDE_CMD" ]]; then
+    if command -v claude &> /dev/null; then
+        CLAUDE_CMD="claude"
+    elif [[ -x "$HOME/.claude/local/claude" ]]; then
+        CLAUDE_CMD="$HOME/.claude/local/claude"
+    fi
+fi
 
-if ! command -v "$CLAUDE_CMD" &> /dev/null; then
+if [[ -z "$CLAUDE_CMD" ]]; then
     echo "SKIP: claude CLI not found in PATH (set CLAUDE_PATH to override)"
     echo "Phase 2 SKIPPED: Setup verification passed, but integration test requires claude CLI"
     echo ""
