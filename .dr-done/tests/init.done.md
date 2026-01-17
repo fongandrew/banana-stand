@@ -206,3 +206,12 @@ diff "actual.txt" "expected.txt" || exit 1
 1. Create `tests/run.sh` script
 2. Add `.tmp/` to `.gitignore`
 3. Create first test case to validate the framework
+
+---
+
+## Decomposition Summary
+
+Task decomposed into:
+- `101-create-test-runner.md` - Create the `tests/run.sh` script
+- `102-update-gitignore.md` - Add `.tmp/` to `.gitignore`
+- `103-create-first-test-case.md` - Create the `basic-start` test case
