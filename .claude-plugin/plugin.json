@@ -1,0 +1,8 @@
+{
+  "name": "dr-done",
+  "description": "File-based task decomposition and execution for workstreams",
+  "version": "1.0.0",
+  "author": {
+    "name": "Andrew Fong"
+  }
+}
