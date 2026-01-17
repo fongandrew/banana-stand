@@ -107,3 +107,25 @@ Add the PreToolUse hook to `plugins/dr-done/hooks/hooks.json`:
 - Exit code 0 with no JSON output = let normal flow proceed
 - Exit code 0 with `permissionDecision: deny` = block the tool use
 - The `tool_input` for Bash contains `command` and optionally `dangerouslyDisableSandbox`
+
+---
+
+## Completion Summary
+
+Implemented the PreToolUse hook for the dr-done plugin:
+
+1. Created `plugins/dr-done/scripts/pre-tool-use.sh`:
+   - Checks for `.claude/dr-done.local.yaml` existence (no-op if not present)
+   - Parses tool input JSON using jq
+   - Denies Bash tool calls with `dangerouslyDisableSandbox: true`
+   - Returns helpful guidance in denial message
+
+2. Updated `plugins/dr-done/hooks/hooks.json`:
+   - Added PreToolUse hook configuration pointing to the new script
+
+3. Verified all acceptance criteria:
+   - Hook script exists and is executable
+   - Hook is registered in hooks.json
+   - No-op when dr-done.local.yaml is absent
+   - Denies unsandboxed bash with clear guidance when dr-done is active
+   - Allows all other tool usage (sandboxed bash, Read, Write, etc.)
