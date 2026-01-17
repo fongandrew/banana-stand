@@ -16,3 +16,14 @@ The README should provide enough context for an agent (or human) to understand:
 5. **How to start processing**: Using `/dr-done:start [workstream-slug]`
 
 Keep the README concise but informative.
+
+---
+
+## Completion Summary
+
+Created `/Users/afong/repos/banana-stand/.dr-done/README.md` with documentation covering:
+- What dr-done is and its purpose
+- Directory structure explanation
+- Task file conventions (alphabetical processing, `.done.md`/`.stuck.md` suffixes)
+- How to create a new workstream with numbered task files
+- How to start processing with `/dr-done:start [workstream-name]`
