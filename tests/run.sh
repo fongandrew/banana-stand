@@ -3,7 +3,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-TMP_DIR="$REPO_ROOT/.tmp"
+TMP_DIR="/tmp/claude/banana-stand-tests"
 TIMEOUT=300  # 5 minute default
 
 # Parse arguments
