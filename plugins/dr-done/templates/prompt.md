@@ -51,3 +51,6 @@ Read the task file and decide if it is:
 - Keep summaries concise
 - One task per iteration - do not try to do multiple tasks
 - The stop hooks will automatically trigger the next iteration
+- Only stage and commit files related to the current workstream
+- Do not stage or commit files in `.dr-done/` directories other than the active workstream
+- If you notice changes in other `.dr-done/` directories, leave them unstaged
