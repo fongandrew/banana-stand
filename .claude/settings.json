@@ -1,4 +1,7 @@
 {
+  "permissions": {
+    "defaultMode": "acceptEdits"
+  },
   "sandbox": {
     "enabled": true,
     "autoAllowBashIfSandboxed": true
