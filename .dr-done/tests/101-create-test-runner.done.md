@@ -19,5 +19,17 @@ Create `tests/run.sh` - the main test runner script for the E2E test framework.
 
 ## Acceptance Criteria
 
-- [ ] `tests/run.sh` exists and is executable
-- [ ] Script follows the specification in `init.md`
+- [x] `tests/run.sh` exists and is executable
+- [x] Script follows the specification in `init.md`
+
+---
+
+## Completion Summary
+
+Created `tests/run.sh` with all specified features:
+- Finds test cases (directories containing `test.sh`)
+- Copies test case to `.tmp/{case-name}/` for isolation
+- Initializes git in temp directory with test user config
+- Runs tests with 5-minute timeout
+- Supports `-v` verbose mode and test name filtering
+- Reports pass/fail summary and exits non-zero on failures
