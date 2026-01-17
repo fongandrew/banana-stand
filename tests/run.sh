@@ -6,6 +6,17 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 TMP_DIR="/tmp/claude/banana-stand-tests"
 TIMEOUT=300  # 5 minute default
 
+# Track child PIDs for cleanup on Ctrl+C
+CHILD_PID=""
+cleanup() {
+    if [[ -n "$CHILD_PID" ]]; then
+        kill -TERM "$CHILD_PID" 2>/dev/null || true
+        wait "$CHILD_PID" 2>/dev/null || true
+    fi
+    exit 130
+}
+trap cleanup INT TERM
+
 # Parse arguments
 TEST_FILTER=""
 
@@ -49,9 +60,13 @@ for TEST_SCRIPT in $CASES; do
 
     # Run the test with timeout
     # Always show output so users can see what's happening
+    # Run in background so we can catch Ctrl+C and clean up
     set +e
-    timeout "$TIMEOUT" bash "$TEST_SCRIPT" "$TEST_TMP"
+    timeout "$TIMEOUT" bash "$TEST_SCRIPT" "$TEST_TMP" &
+    CHILD_PID=$!
+    wait "$CHILD_PID"
     EXIT_CODE=$?
+    CHILD_PID=""
     set -e
 
     if [[ $EXIT_CODE -eq 0 ]]; then
