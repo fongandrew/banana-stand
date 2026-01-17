@@ -8,4 +8,8 @@ Add `.tmp/` to `.gitignore` so test temporary files are not committed.
 
 ## Acceptance Criteria
 
-- [ ] `.gitignore` contains `.tmp/` entry
+- [x] `.gitignore` contains `.tmp/` entry
+
+## Summary
+
+Added `.tmp/` entry to the root `.gitignore` file to prevent test temporary files from being committed.
