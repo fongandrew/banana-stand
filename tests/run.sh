@@ -7,12 +7,10 @@ TMP_DIR="/tmp/claude/banana-stand-tests"
 TIMEOUT=300  # 5 minute default
 
 # Parse arguments
-VERBOSE=false
 TEST_FILTER=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        -v|--verbose) VERBOSE=true; shift ;;
         *) TEST_FILTER="$1"; shift ;;
     esac
 done
@@ -50,14 +48,10 @@ for TEST_SCRIPT in $CASES; do
     git -C "$TEST_TMP" config user.name "Test"
 
     # Run the test with timeout
+    # Always show output so users can see what's happening
     set +e
-    if [[ "$VERBOSE" == "true" ]]; then
-        timeout "$TIMEOUT" bash "$TEST_SCRIPT" "$TEST_TMP"
-        EXIT_CODE=$?
-    else
-        OUTPUT=$(timeout "$TIMEOUT" bash "$TEST_SCRIPT" "$TEST_TMP" 2>&1)
-        EXIT_CODE=$?
-    fi
+    timeout "$TIMEOUT" bash "$TEST_SCRIPT" "$TEST_TMP"
+    EXIT_CODE=$?
     set -e
 
     if [[ $EXIT_CODE -eq 0 ]]; then
@@ -65,9 +59,6 @@ for TEST_SCRIPT in $CASES; do
         ((PASSED++))
     else
         echo "FAILED: $CASE_NAME"
-        if [[ "$VERBOSE" != "true" ]]; then
-            echo "$OUTPUT"
-        fi
         if [[ $EXIT_CODE -eq 124 ]]; then
             echo "(timed out after ${TIMEOUT}s)"
         fi
