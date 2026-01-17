@@ -107,3 +107,15 @@ Interactive skill that helps create new FAQ entries:
    - Port conflicts (EADDRINUSE, use PORT env var)
    - Playwright tests (use pnpm run test:e2e)
    - Smart quotes (use linter fixer, avoid exact string matching in tests)
+
+---
+
+## Decomposition Summary
+
+Decomposed into subtasks:
+- `010-create-plugin-structure.md` - Create directory structure for plugin and .faq-check
+- `020-implement-hooks-json.md` - Create hooks.json with PostToolUse registration
+- `030-implement-post-tool-use-script.md` - Main hook script implementation
+- `040-create-add-skill.md` - /faq-check:add skill template
+- `050-create-faq-readme.md` - User documentation in .faq-check/README.md
+- `060-create-example-faqs.md` - Example FAQ files for common scenarios
