@@ -12,10 +12,10 @@ Archive a completed dr-done workstream.
 
 ## Instructions
 
-When the user invokes this command, run the archive script from the repository root:
+When the user invokes this command, run the archive script:
 
 ```bash
-./plugins/dr-done/scripts/archive.sh <workstream-slug>
+"${CLAUDE_PLUGIN_ROOT}/scripts/archive.sh" $ARGUMENTS
 ```
 
 The script will:
