@@ -12,31 +12,20 @@ Archive a completed dr-done workstream.
 
 ## Instructions
 
-When the user invokes this command:
+When the user invokes this command, run the archive script:
 
-1. Validate the workstream exists:
-   - Check if `.dr-done/<workstream-slug>/` exists
-   - If not, inform the user and stop
+```bash
+"$CLAUDE_PLUGIN_ROOT/scripts/archive.sh" <workstream-slug>
+```
 
-2. Check for incomplete tasks:
-   - Look for any `.md` files in the workstream directory that don't end with `.done.md` or `.stuck.md`
-   - If found, warn the user: "Note: This workstream has incomplete tasks: <list of files>"
-   - Continue with archiving (this is a warning, not a blocker)
+The script will:
+1. Validate the workstream exists
+2. Warn about any incomplete tasks (non-blocking)
+3. Create the archive directory if needed
+4. Move the workstream to `.dr-done/.archive/`
+5. Git add and commit the change
 
-3. Create archive directory if needed:
-   ```bash
-   mkdir -p .dr-done/.archive
-   ```
-
-4. Move the workstream:
-   ```bash
-   mv ".dr-done/<workstream-slug>" ".dr-done/.archive/<workstream-slug>"
-   ```
-
-5. Git commit with a commit message like `[dr-done] Archive <workstream-slug>`
-
-6. Confirm to the user:
-   - "Archived workstream '<workstream-slug>' to .dr-done/.archive/"
+Report the script output to the user.
 
 ## Notes
 
