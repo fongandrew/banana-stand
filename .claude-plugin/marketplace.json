@@ -1,0 +1,23 @@
+{
+  "name": "banana-stand",
+  "owner": {
+    "name": "Andrew Fong"
+  },
+  "metadata": {
+    "description": "Unfortunately, the money is in another banana stand.",
+    "version": "1.0.0",
+    "pluginRoot": "./plugins"
+  },
+  "plugins": [
+    {
+      "name": "dr-done",
+      "source": "./plugins/dr-done",
+      "description": "File-based task decomposition and execution for workstreams",
+      "version": "1.0.0",
+      "author": {
+        "name": "Andrew Fong"
+      },
+      "keywords": ["tasks", "workstream", "automation", "decomposition"]
+    }
+  ]
+}
