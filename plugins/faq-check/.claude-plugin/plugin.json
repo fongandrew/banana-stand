@@ -1,0 +1,8 @@
+{
+  "name": "faq-check",
+  "description": "Automatically surface relevant FAQ content based on command output",
+  "version": "1.0.0",
+  "author": {
+    "name": "Andrew Fong"
+  }
+}
