@@ -13,3 +13,19 @@ Create `plugins/faq-check/scripts/pre-tool-use.sh` that:
 The script path should use `$PLUGIN_DIR` or similar mechanism to locate the faq-wrapper.sh script.
 
 Reference the parent task `090-refactor.md` for full context.
+
+---
+
+## Completion Summary
+
+Created `plugins/faq-check/scripts/pre-tool-use.sh` that:
+
+- Reads Bash tool input JSON from stdin
+- Parses the `command` parameter using `jq`
+- Detects `FAQ_CHECK=0` prefix and strips it for opt-out
+- Wraps non-opted-out commands with the FAQ wrapper script path
+- Properly escapes single quotes using the `'\''` technique
+- Uses `$PLUGIN_DIR` derived from script location to locate faq-wrapper.sh
+- Outputs JSON with rewritten command using `jq -n`
+
+Tested with: basic commands, opt-out prefix, single quotes, double quotes, pipes, variables, and missing command parameter.
