@@ -173,3 +173,21 @@ echo "[FAQ] See .faq-check/port-conflicts.md for guidance" >&2
 2. Should the wrapper script be copied to a temp location or referenced from plugin dir?
 3. How should we handle commands that read from stdin?
 4. Should there be a way to disable FAQ checking globally (env var in shell profile)?
+
+---
+
+## Decomposition Summary
+
+This task was decomposed into the following subtasks:
+
+- **091-update-hooks-json.md** - Update hooks.json to use PreToolUse instead of PostToolUse
+- **092-create-pre-tool-use-script.md** - Create the PreToolUse wrapper script for command rewriting
+- **093-create-faq-wrapper-script.md** - Create the runtime FAQ wrapper script
+- **094-create-match-checker-script.md** - Create standalone match checker utility
+- **095-update-faq-file-format.md** - Add command_match to FAQ file frontmatter
+- **096-update-templates-readme.md** - Update documentation for new format
+- **097-update-add-command.md** - Update /faq-check:add skill for new format
+- **098-delete-obsolete-files.md** - Remove post-tool-use.sh after migration
+- **099-update-tests.md** - Rewrite tests for new architecture
+
+Decision: Keep `.md` files with extended frontmatter (don't switch to `.yaml`).
