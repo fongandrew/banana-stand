@@ -1,4 +1,5 @@
 ---
+command_match: /echo|printf/
 triggers:
   - BANANA_STAND_TEST_ERROR
   - /banana.*stand.*error/i

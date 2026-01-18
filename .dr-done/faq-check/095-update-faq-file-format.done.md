@@ -24,3 +24,14 @@ This error occurs when npm doesn't have write access...
 Update the example FAQ files in `tests/faq-check/.faq-check/` to use the new format.
 
 Reference the parent task `090-refactor.md` for full context.
+
+---
+
+## Summary
+
+The test FAQ files were already updated to the new format in previous tasks:
+
+- `tests/faq-check/.faq-check/test-error.md` - Has `command_match: /echo|printf/`, `triggers` array, and `match_on: failure`
+- `tests/faq-check/.faq-check/test-success.md` - Has `command_match: /echo|printf/`, `triggers` array, and `match_on: success`
+
+The `match-checker.sh` script also already supports parsing all three frontmatter fields. No changes were required.
