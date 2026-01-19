@@ -54,9 +54,17 @@ STDERR_CONTENT=""
 STDOUT_IS_BINARY=0
 STDERR_IS_BINARY=0
 
+# Function to check if a file contains null bytes (binary)
+is_binary() {
+    local file="$1"
+    # Compare file with version where nulls are stripped
+    # If they differ, the file contains null bytes
+    ! tr -d '\0' < "$file" | cmp -s - "$file"
+}
+
 # Check if stdout is binary (contains null bytes)
 if [[ -s "$STDOUT_FILE" ]]; then
-    if grep -q $'\x00' "$STDOUT_FILE" 2>/dev/null; then
+    if is_binary "$STDOUT_FILE"; then
         STDOUT_IS_BINARY=1
         STDOUT_CONTENT="[binary output]"
     else
@@ -68,7 +76,7 @@ fi
 
 # Check if stderr is binary (contains null bytes)
 if [[ -s "$STDERR_FILE" ]]; then
-    if grep -q $'\x00' "$STDERR_FILE" 2>/dev/null; then
+    if is_binary "$STDERR_FILE"; then
         STDERR_IS_BINARY=1
         STDERR_CONTENT="[binary output]"
     else
