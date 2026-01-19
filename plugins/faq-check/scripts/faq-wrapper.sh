@@ -11,12 +11,28 @@
 # 4. Checks output against FAQ patterns using match-checker.sh
 # 5. If a match is found, appends context message to stderr
 
+# Debug logging
+LOG_FILE="/tmp/claude/faq-check-debug.log"
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [faq-wrapper] $*" >> "$LOG_FILE"
+}
+
+log "=== faq-wrapper.sh started ==="
+log "Args: $*"
+
 # Get the directory where this script lives
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MATCH_CHECKER="$SCRIPT_DIR/match-checker.sh"
 
-# The command to execute is passed as a single argument
-ORIGINAL_COMMAND="$1"
+# The command to execute is passed either directly or base64 encoded
+if [[ "$1" == "--base64" ]]; then
+    # Decode base64 encoded command
+    ORIGINAL_COMMAND=$(echo -n "$2" | base64 -d)
+    log "Decoded base64 command"
+else
+    ORIGINAL_COMMAND="$1"
+fi
+log "ORIGINAL_COMMAND: $ORIGINAL_COMMAND"
 
 if [[ -z "$ORIGINAL_COMMAND" ]]; then
     echo "Error: No command provided" >&2
@@ -42,11 +58,13 @@ trap cleanup EXIT
 
 # Run the command in a subshell, capturing outputs to temp files
 # Using eval to properly handle complex commands with pipes, redirections, etc.
+log "Executing command..."
 (
     eval "$ORIGINAL_COMMAND"
 ) > "$STDOUT_FILE" 2> "$STDERR_FILE"
 COMMAND_EXIT_CODE=$?
 echo "$COMMAND_EXIT_CODE" > "$EXIT_CODE_FILE"
+log "Command finished with exit code: $COMMAND_EXIT_CODE"
 
 # Read captured output for FAQ matching
 STDOUT_CONTENT=""
@@ -109,4 +127,5 @@ $STDERR_CONTENT"
 fi
 
 # Exit with the original command's exit code
+log "Exiting with code: $COMMAND_EXIT_CODE"
 exit "$COMMAND_EXIT_CODE"

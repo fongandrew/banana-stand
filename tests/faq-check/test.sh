@@ -26,12 +26,12 @@ TESTS_PASSED=0
 TESTS_FAILED=0
 
 pass() {
-    ((TESTS_PASSED++))
+    ((++TESTS_PASSED))
     echo "  PASS: $1"
 }
 
 fail() {
-    ((TESTS_FAILED++))
+    ((++TESTS_FAILED))
     echo "  FAIL: $1"
     if [[ -n "${2:-}" ]]; then
         echo "        Expected: $2"
@@ -42,7 +42,7 @@ fail() {
 }
 
 run_test() {
-    ((TESTS_RUN++))
+    ((++TESTS_RUN))
     echo ""
     echo "Test $TESTS_RUN: $1"
     echo "$(printf '=%.0s' {1..60})"
@@ -97,7 +97,7 @@ echo "==========================================="
 
 run_test "pre-tool-use.sh: Basic command wrapping"
 
-INPUT='{"tool_input": {"command": "npm install"}}'
+INPUT='{"tool_name": "Bash", "tool_input": {"command": "npm install"}}'
 OUTPUT=$(echo "$INPUT" | "$PLUGIN_ROOT/scripts/pre-tool-use.sh")
 if echo "$OUTPUT" | grep -q "faq-wrapper.sh"; then
     pass "Command is wrapped with faq-wrapper.sh"
@@ -107,12 +107,13 @@ fi
 
 run_test "pre-tool-use.sh: Opt-out with FAQ_CHECK=0"
 
-INPUT='{"tool_input": {"command": "FAQ_CHECK=0 npm install"}}'
+INPUT='{"tool_name": "Bash", "tool_input": {"command": "FAQ_CHECK=0 npm install"}}'
 OUTPUT=$(echo "$INPUT" | "$PLUGIN_ROOT/scripts/pre-tool-use.sh")
 if echo "$OUTPUT" | grep -q "faq-wrapper.sh"; then
     fail "Command should not be wrapped with opt-out" "no faq-wrapper.sh" "$OUTPUT"
 else
-    if echo "$OUTPUT" | jq -r '.command' | grep -q "npm install"; then
+    # Check the command in the hookSpecificOutput structure
+    if echo "$OUTPUT" | jq -r '.hookSpecificOutput.updatedInput.command' | grep -q "npm install"; then
         pass "Command passes through without wrapper"
     else
         fail "Stripped command not found" "npm install" "$OUTPUT"
@@ -121,7 +122,7 @@ fi
 
 run_test "pre-tool-use.sh: Empty command passes through"
 
-INPUT='{"tool_input": {"command": ""}}'
+INPUT='{"tool_name": "Bash", "tool_input": {"command": ""}}'
 OUTPUT=$(echo "$INPUT" | "$PLUGIN_ROOT/scripts/pre-tool-use.sh")
 if [[ -z "$OUTPUT" ]]; then
     pass "Empty command produces no output (pass-through)"
@@ -131,7 +132,7 @@ fi
 
 run_test "pre-tool-use.sh: Command with single quotes"
 
-INPUT='{"tool_input": {"command": "echo '\''hello world'\''"}}'
+INPUT='{"tool_name": "Bash", "tool_input": {"command": "echo '\''hello world'\''"}}'
 OUTPUT=$(echo "$INPUT" | "$PLUGIN_ROOT/scripts/pre-tool-use.sh")
 if echo "$OUTPUT" | grep -q "faq-wrapper.sh"; then
     pass "Command with single quotes is wrapped"
