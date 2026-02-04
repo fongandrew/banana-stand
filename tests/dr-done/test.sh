@@ -366,19 +366,19 @@ fi
 # Test user-prompt-submit-hook.sh
 # -----------------------------------------------------------------------------
 
-run_test "user-prompt-submit-hook.sh: No output when not looper"
+run_test "user-prompt-submit-hook.sh: No output when no stuck tasks"
 
 cleanup_dr_done
 setup_dr_done
 create_state_file "other-session" 0
 OUTPUT=$(mock_hook_input "test-session" | "$PLUGIN_ROOT/scripts/user-prompt-submit-hook.sh" 2>&1) && exit_code=0 || exit_code=$?
 if [[ $exit_code -eq 0 && -z "$OUTPUT" ]]; then
-    pass "No output when not looper"
+    pass "No output when no stuck tasks"
 else
-    fail "Should have no output when not looper" "empty output" "$OUTPUT"
+    fail "Should have no output when no stuck tasks" "empty output" "$OUTPUT"
 fi
 
-run_test "user-prompt-submit-hook.sh: Outputs reminder for stuck tasks"
+run_test "user-prompt-submit-hook.sh: Outputs reminder for stuck tasks (looper)"
 
 cleanup_dr_done
 setup_dr_done
@@ -387,9 +387,23 @@ create_task_file "001-test-task.stuck.md" "Stuck task"
 
 OUTPUT=$(mock_hook_input "test-session" | "$PLUGIN_ROOT/scripts/user-prompt-submit-hook.sh" 2>&1) && exit_code=0 || exit_code=$?
 if echo "$OUTPUT" | grep -qi "stuck"; then
-    pass "Outputs reminder for stuck tasks"
+    pass "Outputs reminder for stuck tasks (looper)"
 else
     fail "Should output stuck task reminder" "contains 'stuck'" "$OUTPUT"
+fi
+
+run_test "user-prompt-submit-hook.sh: Outputs reminder for stuck tasks (non-looper)"
+
+cleanup_dr_done
+setup_dr_done
+create_state_file "other-session" 0
+create_task_file "001-test-task.stuck.md" "Stuck task"
+
+OUTPUT=$(mock_hook_input "test-session" | "$PLUGIN_ROOT/scripts/user-prompt-submit-hook.sh" 2>&1) && exit_code=0 || exit_code=$?
+if echo "$OUTPUT" | grep -qi "stuck"; then
+    pass "Outputs reminder for stuck tasks (non-looper)"
+else
+    fail "Should output stuck task reminder for non-looper" "contains 'stuck'" "$OUTPUT"
 fi
 
 # -----------------------------------------------------------------------------
