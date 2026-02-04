@@ -31,9 +31,10 @@ read_config() {
     CONFIG_REVIEW=true
 
     if [[ -f "$CONFIG_FILE" ]]; then
-        local git_commit=$(jq -r '.gitCommit // true' "$CONFIG_FILE")
+        # Note: Don't use jq's // operator for booleans - it treats false as falsy
+        local git_commit=$(jq -r '.gitCommit | if . == null then "true" else . end' "$CONFIG_FILE")
         local max_iter=$(jq -r '.maxIterations // 50' "$CONFIG_FILE")
-        local review=$(jq -r '.review // true' "$CONFIG_FILE")
+        local review=$(jq -r '.review | if . == null then "true" else . end' "$CONFIG_FILE")
 
         if [[ "$git_commit" == "false" ]]; then
             CONFIG_GIT_COMMIT=false
@@ -96,6 +97,14 @@ is_looper() {
     fi
     local looper=$(jq -r '.looper // empty' "$STATE_FILE")
     [[ "$looper" == "$session_id" ]]
+}
+
+# Set looper to a session ID
+set_looper() {
+    local session_id="$1"
+    cat > "$STATE_FILE" << EOF
+{"looper": "$session_id", "iteration": 0}
+EOF
 }
 
 # Clear looper (set to null)

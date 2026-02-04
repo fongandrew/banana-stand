@@ -11,7 +11,8 @@
 set -e
 
 # TEST_TMP is passed as first argument by the test runner
-TEST_TMP="$1"
+# Resolve to canonical path to match git rev-parse --show-toplevel
+TEST_TMP="$(cd "$1" && pwd -P)"
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 PLUGIN_ROOT="$REPO_ROOT/plugins/dr-done"
 
@@ -140,7 +141,7 @@ for script in common.sh template.sh; do
 done
 
 # Verify hook scripts exist and are executable
-for script in stop-hook.sh session-start-hook.sh user-prompt-submit-hook.sh; do
+for script in stop-hook.sh session-start-hook.sh user-prompt-submit-hook.sh permission-request-hook.sh; do
     if [[ ! -f "$PLUGIN_ROOT/scripts/$script" ]]; then
         echo "FAIL: scripts/$script not found"
         exit 1
@@ -153,7 +154,7 @@ for script in stop-hook.sh session-start-hook.sh user-prompt-submit-hook.sh; do
 done
 
 # Verify helper scripts exist and are executable
-for script in init.sh generate-timestamp.sh read-state.sh find-tasks.sh; do
+for script in init.sh generate-timestamp.sh read-state.sh find-tasks.sh set-looper.sh generate-loop-prompt.sh; do
     if [[ ! -f "$PLUGIN_ROOT/scripts/$script" ]]; then
         echo "FAIL: scripts/$script not found"
         exit 1
@@ -237,10 +238,10 @@ fi
 
 run_test "stop-hook.sh: Block message contains loop prompt"
 
-if echo "$OUTPUT" | jq -r '.reason' | grep -q "task completion loop"; then
+if echo "$OUTPUT" | jq -r '.reason' | grep -q "Work on this task"; then
     pass "Block message contains loop prompt"
 else
-    fail "Block message missing loop prompt" "contains 'task completion loop'" "$(echo "$OUTPUT" | jq -r '.reason' | head -c 100)"
+    fail "Block message missing loop prompt" "contains 'Work on this task'" "$(echo "$OUTPUT" | jq -r '.reason' | head -c 100)"
 fi
 
 run_test "stop-hook.sh: Looper with review tasks blocks with reviewer prompt"
@@ -355,10 +356,10 @@ create_config_file true 50 true
 create_task_file "001-test-task.md" "Test task"
 
 OUTPUT=$(mock_hook_input "test-session" | "$PLUGIN_ROOT/scripts/session-start-hook.sh" 2>&1) && exit_code=0 || exit_code=$?
-if echo "$OUTPUT" | grep -q "Session resumed" && echo "$OUTPUT" | grep -q "task completion loop"; then
+if echo "$OUTPUT" | grep -q "Session resumed" && echo "$OUTPUT" | grep -q "Work on this task"; then
     pass "Re-injects loop prompt when looper"
 else
-    fail "Should re-inject loop prompt" "contains 'Session resumed' and 'task completion loop'" "$OUTPUT"
+    fail "Should re-inject loop prompt" "contains 'Session resumed' and 'Work on this task'" "$OUTPUT"
 fi
 
 # -----------------------------------------------------------------------------
@@ -389,6 +390,159 @@ if echo "$OUTPUT" | grep -qi "stuck"; then
     pass "Outputs reminder for stuck tasks"
 else
     fail "Should output stuck task reminder" "contains 'stuck'" "$OUTPUT"
+fi
+
+# -----------------------------------------------------------------------------
+# Test permission-request-hook.sh
+# -----------------------------------------------------------------------------
+
+run_test "permission-request-hook.sh: No output when no state file"
+
+cleanup_dr_done
+OUTPUT=$(mock_hook_input "test-session" | "$PLUGIN_ROOT/scripts/permission-request-hook.sh" 2>&1) && exit_code=0 || exit_code=$?
+if [[ $exit_code -eq 0 && -z "$OUTPUT" ]]; then
+    pass "No output when no state file"
+else
+    fail "Should allow permission request with no state file" "exit 0, empty output" "exit $exit_code, output: $OUTPUT"
+fi
+
+run_test "permission-request-hook.sh: No output when not looper"
+
+cleanup_dr_done
+setup_dr_done
+create_state_file "other-session" 0
+OUTPUT=$(mock_hook_input "test-session" | "$PLUGIN_ROOT/scripts/permission-request-hook.sh" 2>&1) && exit_code=0 || exit_code=$?
+if [[ $exit_code -eq 0 && -z "$OUTPUT" ]]; then
+    pass "No output when not looper"
+else
+    fail "Should allow permission request when not looper" "exit 0, empty output" "exit $exit_code, output: $OUTPUT"
+fi
+
+run_test "permission-request-hook.sh: Denies when looper"
+
+cleanup_dr_done
+setup_dr_done
+create_state_file "test-session" 0
+
+OUTPUT=$(mock_hook_input "test-session" | "$PLUGIN_ROOT/scripts/permission-request-hook.sh" 2>&1) && exit_code=0 || exit_code=$?
+if echo "$OUTPUT" | jq -e '.hookSpecificOutput.decision.behavior == "deny"' >/dev/null 2>&1; then
+    pass "Denies when looper"
+else
+    fail "Should deny permission request when looper" "hookSpecificOutput.decision.behavior=deny" "$OUTPUT"
+fi
+
+run_test "permission-request-hook.sh: Deny message explains alternatives"
+
+if echo "$OUTPUT" | jq -r '.hookSpecificOutput.decision.message' | grep -q "stuck.md"; then
+    pass "Deny message explains alternatives"
+else
+    fail "Deny message should explain alternatives" "contains 'stuck.md'" "$(echo "$OUTPUT" | jq -r '.hookSpecificOutput.decision.message' | head -c 100)"
+fi
+
+# -----------------------------------------------------------------------------
+# Test set-looper.sh
+# -----------------------------------------------------------------------------
+
+run_test "set-looper.sh: Sets looper in state file"
+
+cleanup_dr_done
+setup_dr_done
+"$PLUGIN_ROOT/scripts/set-looper.sh" "my-session-123" >/dev/null 2>&1 || true
+if [[ -f "$TEST_TMP/.dr-done/state.json" ]]; then
+    looper=$(jq -r '.looper' "$TEST_TMP/.dr-done/state.json")
+    iteration=$(jq -r '.iteration' "$TEST_TMP/.dr-done/state.json")
+    if [[ "$looper" == "my-session-123" && "$iteration" == "0" ]]; then
+        pass "Sets looper in state file"
+    else
+        fail "Should set looper correctly" "looper=my-session-123, iteration=0" "looper=$looper, iteration=$iteration"
+    fi
+else
+    fail "Should create state file" "state.json exists" "state.json not found"
+fi
+
+run_test "set-looper.sh: Requires session_id argument"
+
+cleanup_dr_done
+setup_dr_done
+OUTPUT=$("$PLUGIN_ROOT/scripts/set-looper.sh" 2>&1) && exit_code=0 || exit_code=$?
+if [[ $exit_code -ne 0 && "$OUTPUT" == *"session_id required"* ]]; then
+    pass "Requires session_id argument"
+else
+    fail "Should require session_id" "exit non-zero, error message" "exit $exit_code, output: $OUTPUT"
+fi
+
+# -----------------------------------------------------------------------------
+# Test generate-loop-prompt.sh
+# -----------------------------------------------------------------------------
+
+run_test "generate-loop-prompt.sh: Outputs pending task prompt"
+
+cleanup_dr_done
+setup_dr_done
+create_config_file true 50 true
+create_task_file "001-test-task.md" "Test task"
+
+OUTPUT=$("$PLUGIN_ROOT/scripts/generate-loop-prompt.sh" 2>&1) && exit_code=0 || exit_code=$?
+if [[ $exit_code -eq 0 ]] && echo "$OUTPUT" | grep -q "Work on this task" && echo "$OUTPUT" | grep -q "001-test-task.md"; then
+    pass "Outputs pending task prompt"
+else
+    fail "Should output pending task prompt" "contains 'Work on this task' and task file" "$OUTPUT"
+fi
+
+run_test "generate-loop-prompt.sh: Outputs review prompt for .review.md tasks"
+
+cleanup_dr_done
+setup_dr_done
+create_config_file true 50 true
+create_task_file "001-test-task.review.md" "Completed task"
+
+OUTPUT=$("$PLUGIN_ROOT/scripts/generate-loop-prompt.sh" 2>&1) && exit_code=0 || exit_code=$?
+if [[ $exit_code -eq 0 ]] && echo "$OUTPUT" | grep -q "reviewer" && echo "$OUTPUT" | grep -q "001-test-task.review.md"; then
+    pass "Outputs review prompt for .review.md tasks"
+else
+    fail "Should output reviewer prompt" "contains 'reviewer' and task file" "$OUTPUT"
+fi
+
+run_test "generate-loop-prompt.sh: Outputs complete message when no tasks"
+
+cleanup_dr_done
+setup_dr_done
+create_config_file true 50 true
+# No task files
+
+OUTPUT=$("$PLUGIN_ROOT/scripts/generate-loop-prompt.sh" 2>&1) && exit_code=0 || exit_code=$?
+if [[ $exit_code -eq 0 ]] && echo "$OUTPUT" | grep -q "All tasks complete"; then
+    pass "Outputs complete message when no tasks"
+else
+    fail "Should output complete message" "contains 'All tasks complete'" "$OUTPUT"
+fi
+
+run_test "generate-loop-prompt.sh: Uses .done.md when review disabled"
+
+cleanup_dr_done
+setup_dr_done
+create_config_file true 50 false  # review=false
+create_task_file "001-test-task.md" "Test task"
+
+OUTPUT=$("$PLUGIN_ROOT/scripts/generate-loop-prompt.sh" 2>&1) && exit_code=0 || exit_code=$?
+if [[ $exit_code -eq 0 ]] && echo "$OUTPUT" | grep -q ".done.md"; then
+    pass "Uses .done.md when review disabled"
+else
+    fail "Should use .done.md extension" "contains '.done.md'" "$OUTPUT"
+fi
+
+run_test "generate-loop-prompt.sh: Skips commit instruction when gitCommit disabled"
+
+cleanup_dr_done
+setup_dr_done
+create_config_file false 50 true  # gitCommit=false
+create_task_file "001-test-task.md" "Test task"
+
+OUTPUT=$("$PLUGIN_ROOT/scripts/generate-loop-prompt.sh" 2>&1) && exit_code=0 || exit_code=$?
+if [[ $exit_code -eq 0 ]] && ! echo "$OUTPUT" | grep -q "Commit your changes"; then
+    pass "Skips commit instruction when gitCommit disabled"
+else
+    fail "Should not contain commit instruction" "no 'Commit your changes'" "$OUTPUT"
 fi
 
 # =============================================================================

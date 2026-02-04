@@ -49,61 +49,23 @@ if [[ "$CONFIG_GIT_COMMIT" == "true" ]] && has_uncommitted_changes; then
     exit 0
 fi
 
-# Check for tasks needing review
-review_tasks=$(find_review_tasks)
-if [[ -n "$review_tasks" ]]; then
-    next_review=$(echo "$review_tasks" | head -1)
-    user_instructions=$(get_user_review_instructions)
+# Get next task and handle accordingly
+get_next_task
 
-    # Build the review task for the subagent
-    review_task="Review the completed task at: $next_review"
-    if [[ -n "$user_instructions" ]]; then
-        review_task="$review_task
-
-$user_instructions"
-    fi
-
-    output_block "Task ready for review. Use the Task tool to spawn the dr-done:reviewer subagent with this prompt:
-
-$review_task"
-    exit 0
-fi
-
-# Check for pending tasks
-pending_tasks=$(find_pending_tasks)
-if [[ -n "$pending_tasks" ]]; then
-    next_task=$(echo "$pending_tasks" | head -1)
-
-    if [[ "$CONFIG_REVIEW" == "true" ]]; then
-        done_extension=".review.md"
-        review_instruction="- If complete, spawn a reviewer subagent with the review prompt"
-    else
-        done_extension=".done.md"
-        review_instruction=""
-    fi
-
-    if [[ "$CONFIG_GIT_COMMIT" == "true" ]]; then
-        commit_instruction="- Commit your changes with a descriptive message"
-    else
-        commit_instruction=""
-    fi
-
-    loop_prompt=$(build_loop_prompt "$next_task" "$done_extension" "$commit_instruction" "$review_instruction")
-
-    output_block "$loop_prompt"
-    exit 0
-fi
-
-# Check for stuck tasks
-stuck_tasks=$(find_stuck_tasks)
-if [[ -n "$stuck_tasks" ]]; then
-    stuck_count=$(echo "$stuck_tasks" | wc -l | tr -d ' ')
-    clear_looper
-    echo "[dr-done] $stuck_count stuck task(s) need attention. Use /dr-done:unstick to retry." >&2
-    exit 0
-fi
-
-# No pending tasks, no review tasks, no stuck tasks = queue complete
-clear_looper
-echo "[dr-done] All tasks complete. Loop stopped." >&2
-exit 0
+case "$NEXT_TASK_TYPE" in
+    review)
+        output_block "Task ready for review. $(build_review_prompt "$NEXT_TASK_FILE")"
+        ;;
+    pending)
+        output_block "$(build_pending_prompt "$NEXT_TASK_FILE")"
+        ;;
+    stuck)
+        stuck_count=$(find_stuck_tasks | wc -l | tr -d ' ')
+        clear_looper
+        echo "[dr-done] $stuck_count stuck task(s) need attention. Use /dr-done:unstick to retry." >&2
+        ;;
+    complete)
+        clear_looper
+        echo "[dr-done] All tasks complete. Loop stopped." >&2
+        ;;
+esac
