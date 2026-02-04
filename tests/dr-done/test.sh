@@ -1,0 +1,413 @@
+#!/bin/bash
+# Test: dr-done
+# Tests for the dr-done plugin - single-queue task automation
+#
+# This test validates:
+#   1. Plugin structure (hooks, skills, lib scripts)
+#   2. Stop hook logic (looper, iteration, queue management)
+#   3. Session start hook (resume behavior)
+#   4. User prompt submit hook (stuck task reminders)
+
+set -e
+
+# TEST_TMP is passed as first argument by the test runner
+TEST_TMP="$1"
+REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+PLUGIN_ROOT="$REPO_ROOT/plugins/dr-done"
+
+cd "$TEST_TMP"
+
+# Initialize as a git repo for the plugin to work
+git init -q
+git config user.email "test@test.com"
+git config user.name "Test User"
+# Create initial commit so git operations work properly
+touch .gitkeep
+git add .gitkeep
+git commit -q -m "Initial commit"
+
+# Test counters
+TESTS_RUN=0
+TESTS_PASSED=0
+TESTS_FAILED=0
+
+pass() {
+    ((++TESTS_PASSED))
+    echo "  PASS: $1"
+}
+
+fail() {
+    ((++TESTS_FAILED))
+    echo "  FAIL: $1"
+    if [[ -n "${2:-}" ]]; then
+        echo "        Expected: $2"
+    fi
+    if [[ -n "${3:-}" ]]; then
+        echo "        Got: $3"
+    fi
+}
+
+run_test() {
+    ((++TESTS_RUN))
+    echo ""
+    echo "Test $TESTS_RUN: $1"
+    echo "$(printf '=%.0s' {1..60})"
+}
+
+# dr-done specific helpers
+setup_dr_done() {
+    mkdir -p "$TEST_TMP/.dr-done/tasks"
+    echo "tasks/" > "$TEST_TMP/.dr-done/.gitignore"
+}
+
+create_state_file() {
+    local looper="$1"
+    local iteration="${2:-0}"
+    mkdir -p "$TEST_TMP/.dr-done"
+    if [[ "$looper" == "null" ]]; then
+        cat > "$TEST_TMP/.dr-done/state.json" << EOF
+{"looper": null, "iteration": $iteration}
+EOF
+    else
+        cat > "$TEST_TMP/.dr-done/state.json" << EOF
+{"looper": "$looper", "iteration": $iteration}
+EOF
+    fi
+}
+
+create_config_file() {
+    local git_commit="${1:-true}"
+    local max_iterations="${2:-50}"
+    local review="${3:-true}"
+    mkdir -p "$TEST_TMP/.dr-done"
+    cat > "$TEST_TMP/.dr-done/config.json" << EOF
+{"gitCommit": $git_commit, "maxIterations": $max_iterations, "review": $review}
+EOF
+}
+
+create_task_file() {
+    local name="$1"
+    local content="${2:-Test task}"
+    mkdir -p "$TEST_TMP/.dr-done/tasks"
+    echo "$content" > "$TEST_TMP/.dr-done/tasks/$name"
+}
+
+mock_hook_input() {
+    local session_id="$1"
+    cat << EOF
+{"session_id": "$session_id", "cwd": "$TEST_TMP"}
+EOF
+}
+
+cleanup_dr_done() {
+    rm -rf "$TEST_TMP/.dr-done"
+}
+
+# =============================================================================
+# Phase 1: Setup verification
+# =============================================================================
+
+echo "Phase 1: Setup verification"
+echo "==========================="
+
+# Verify plugin structure
+if [[ ! -f "$PLUGIN_ROOT/.claude-plugin/plugin.json" ]]; then
+    echo "FAIL: .claude-plugin/plugin.json not found"
+    exit 1
+fi
+echo "OK: .claude-plugin/plugin.json exists"
+
+if [[ ! -f "$PLUGIN_ROOT/hooks/hooks.json" ]]; then
+    echo "FAIL: hooks/hooks.json not found"
+    exit 1
+fi
+echo "OK: hooks/hooks.json exists"
+
+# Verify hooks.json is valid JSON
+if ! jq empty "$PLUGIN_ROOT/hooks/hooks.json" 2>/dev/null; then
+    echo "FAIL: hooks/hooks.json is not valid JSON"
+    exit 1
+fi
+echo "OK: hooks/hooks.json is valid JSON"
+
+# Verify lib scripts exist
+for script in common.sh template.sh; do
+    if [[ ! -f "$PLUGIN_ROOT/scripts/lib/$script" ]]; then
+        echo "FAIL: scripts/lib/$script not found"
+        exit 1
+    fi
+    echo "OK: scripts/lib/$script exists"
+done
+
+# Verify hook scripts exist and are executable
+for script in stop-hook.sh session-start-hook.sh user-prompt-submit-hook.sh; do
+    if [[ ! -f "$PLUGIN_ROOT/scripts/$script" ]]; then
+        echo "FAIL: scripts/$script not found"
+        exit 1
+    fi
+    if [[ ! -x "$PLUGIN_ROOT/scripts/$script" ]]; then
+        echo "FAIL: scripts/$script is not executable"
+        exit 1
+    fi
+    echo "OK: scripts/$script exists and is executable"
+done
+
+# Verify helper scripts exist and are executable
+for script in init.sh generate-timestamp.sh read-state.sh find-tasks.sh; do
+    if [[ ! -f "$PLUGIN_ROOT/scripts/$script" ]]; then
+        echo "FAIL: scripts/$script not found"
+        exit 1
+    fi
+    if [[ ! -x "$PLUGIN_ROOT/scripts/$script" ]]; then
+        echo "FAIL: scripts/$script is not executable"
+        exit 1
+    fi
+    echo "OK: scripts/$script exists and is executable"
+done
+
+# Verify skills exist
+for skill in init add start do stop unstick; do
+    if [[ ! -f "$PLUGIN_ROOT/skills/$skill/SKILL.md" ]]; then
+        echo "FAIL: skills/$skill/SKILL.md not found"
+        exit 1
+    fi
+    echo "OK: skills/$skill/SKILL.md exists"
+done
+
+# Verify reviewer subagent exists
+if [[ ! -f "$PLUGIN_ROOT/agents/reviewer.md" ]]; then
+    echo "FAIL: agents/reviewer.md not found"
+    exit 1
+fi
+echo "OK: agents/reviewer.md exists"
+
+echo ""
+echo "Phase 1 PASSED: Setup verification complete"
+echo ""
+
+# =============================================================================
+# Phase 2: Unit tests for hooks
+# =============================================================================
+
+echo "Phase 2: Unit tests for hooks"
+echo "=============================="
+
+# -----------------------------------------------------------------------------
+# Test stop-hook.sh
+# -----------------------------------------------------------------------------
+
+run_test "stop-hook.sh: No state file allows stop"
+
+cleanup_dr_done
+OUTPUT=$(mock_hook_input "test-session" | "$PLUGIN_ROOT/scripts/stop-hook.sh" 2>&1) && exit_code=0 || exit_code=$?
+if [[ $exit_code -eq 0 && -z "$OUTPUT" ]]; then
+    pass "No state file allows stop (no output)"
+else
+    fail "Should allow stop with no state file" "exit 0, empty output" "exit $exit_code, output: $OUTPUT"
+fi
+
+run_test "stop-hook.sh: Not the looper allows stop"
+
+cleanup_dr_done
+setup_dr_done
+create_state_file "other-session" 0
+OUTPUT=$(mock_hook_input "test-session" | "$PLUGIN_ROOT/scripts/stop-hook.sh" 2>&1) && exit_code=0 || exit_code=$?
+if [[ $exit_code -eq 0 && -z "$OUTPUT" ]]; then
+    pass "Not the looper allows stop"
+else
+    fail "Should allow stop when not looper" "exit 0, empty output" "exit $exit_code, output: $OUTPUT"
+fi
+
+run_test "stop-hook.sh: Looper with pending tasks blocks"
+
+cleanup_dr_done
+setup_dr_done
+create_state_file "test-session" 0
+create_config_file true 50 true
+create_task_file "001-test-task.md" "Test task"
+# Make a commit so there are no uncommitted changes
+git add -A && git commit -m "test" -q 2>/dev/null || true
+
+OUTPUT=$(mock_hook_input "test-session" | "$PLUGIN_ROOT/scripts/stop-hook.sh" 2>&1) && exit_code=0 || exit_code=$?
+if echo "$OUTPUT" | jq -e '.decision == "block"' >/dev/null 2>&1; then
+    pass "Looper with pending tasks blocks"
+else
+    fail "Should block with pending tasks" "decision=block" "$OUTPUT"
+fi
+
+run_test "stop-hook.sh: Block message contains loop prompt"
+
+if echo "$OUTPUT" | jq -r '.reason' | grep -q "task completion loop"; then
+    pass "Block message contains loop prompt"
+else
+    fail "Block message missing loop prompt" "contains 'task completion loop'" "$(echo "$OUTPUT" | jq -r '.reason' | head -c 100)"
+fi
+
+run_test "stop-hook.sh: Looper with review tasks blocks with reviewer prompt"
+
+cleanup_dr_done
+setup_dr_done
+create_state_file "test-session" 0
+create_config_file true 50 true
+create_task_file "001-test-task.review.md" "Completed task"
+git add -A && git commit -m "test" -q 2>/dev/null || true
+
+OUTPUT=$(mock_hook_input "test-session" | "$PLUGIN_ROOT/scripts/stop-hook.sh" 2>&1) && exit_code=0 || exit_code=$?
+if echo "$OUTPUT" | jq -e '.decision == "block"' >/dev/null 2>&1 && echo "$OUTPUT" | jq -r '.reason' | grep -q "reviewer"; then
+    pass "Looper with review tasks blocks with reviewer prompt"
+else
+    fail "Should block with reviewer prompt" "decision=block, contains 'reviewer'" "$OUTPUT"
+fi
+
+run_test "stop-hook.sh: Looper with empty queue clears looper"
+
+cleanup_dr_done
+setup_dr_done
+create_state_file "test-session" 0
+create_config_file true 50 true
+create_task_file "001-test-task.done.md" "Completed task"
+git add -A && git commit -m "test" -q 2>/dev/null || true
+
+OUTPUT=$(mock_hook_input "test-session" | "$PLUGIN_ROOT/scripts/stop-hook.sh" 2>&1) && exit_code=0 || exit_code=$?
+looper=$(jq -r '.looper' "$TEST_TMP/.dr-done/state.json")
+if [[ $exit_code -eq 0 && "$looper" == "null" ]]; then
+    pass "Looper with empty queue clears looper"
+else
+    fail "Should clear looper when queue empty" "looper=null" "looper=$looper"
+fi
+
+run_test "stop-hook.sh: Max iterations clears looper"
+
+cleanup_dr_done
+setup_dr_done
+create_state_file "test-session" 50  # At max iterations
+create_config_file true 50 true
+create_task_file "001-test-task.md" "Test task"
+git add -A && git commit -m "test" -q 2>/dev/null || true
+
+OUTPUT=$(mock_hook_input "test-session" | "$PLUGIN_ROOT/scripts/stop-hook.sh" 2>&1) && exit_code=0 || exit_code=$?
+looper=$(jq -r '.looper' "$TEST_TMP/.dr-done/state.json")
+if [[ $exit_code -eq 0 && "$looper" == "null" ]]; then
+    pass "Max iterations clears looper"
+else
+    fail "Should clear looper at max iterations" "looper=null" "looper=$looper"
+fi
+
+run_test "stop-hook.sh: Uncommitted changes blocks"
+
+cleanup_dr_done
+setup_dr_done
+create_state_file "test-session" 0
+create_config_file true 50 true
+create_task_file "001-test-task.md" "Test task"
+# Create uncommitted changes
+echo "uncommitted" > "$TEST_TMP/uncommitted.txt"
+git add -A  # Stage but don't commit
+
+OUTPUT=$(mock_hook_input "test-session" | "$PLUGIN_ROOT/scripts/stop-hook.sh" 2>&1) && exit_code=0 || exit_code=$?
+if echo "$OUTPUT" | jq -e '.decision == "block"' >/dev/null 2>&1 && echo "$OUTPUT" | jq -r '.reason' | grep -q "uncommitted"; then
+    pass "Uncommitted changes blocks"
+else
+    fail "Should block with uncommitted changes" "decision=block, contains 'uncommitted'" "$OUTPUT"
+fi
+rm -f "$TEST_TMP/uncommitted.txt"
+git reset -q HEAD 2>/dev/null || true
+
+run_test "stop-hook.sh: Increments iteration counter"
+
+cleanup_dr_done
+setup_dr_done
+create_state_file "test-session" 5
+create_config_file true 50 true
+create_task_file "001-test-task.md" "Test task"
+git add -A && git commit -m "test" -q 2>/dev/null || true
+
+mock_hook_input "test-session" | "$PLUGIN_ROOT/scripts/stop-hook.sh" >/dev/null 2>&1 || true
+iteration=$(jq -r '.iteration' "$TEST_TMP/.dr-done/state.json")
+if [[ "$iteration" == "6" ]]; then
+    pass "Increments iteration counter"
+else
+    fail "Should increment iteration" "6" "$iteration"
+fi
+
+# -----------------------------------------------------------------------------
+# Test session-start-hook.sh
+# -----------------------------------------------------------------------------
+
+run_test "session-start-hook.sh: No output when not looper"
+
+cleanup_dr_done
+setup_dr_done
+create_state_file "other-session" 0
+OUTPUT=$(mock_hook_input "test-session" | "$PLUGIN_ROOT/scripts/session-start-hook.sh" 2>&1) && exit_code=0 || exit_code=$?
+if [[ $exit_code -eq 0 && -z "$OUTPUT" ]]; then
+    pass "No output when not looper"
+else
+    fail "Should have no output when not looper" "empty output" "$OUTPUT"
+fi
+
+run_test "session-start-hook.sh: Re-injects loop prompt when looper"
+
+cleanup_dr_done
+setup_dr_done
+create_state_file "test-session" 0
+create_config_file true 50 true
+create_task_file "001-test-task.md" "Test task"
+
+OUTPUT=$(mock_hook_input "test-session" | "$PLUGIN_ROOT/scripts/session-start-hook.sh" 2>&1) && exit_code=0 || exit_code=$?
+if echo "$OUTPUT" | grep -q "Session resumed" && echo "$OUTPUT" | grep -q "task completion loop"; then
+    pass "Re-injects loop prompt when looper"
+else
+    fail "Should re-inject loop prompt" "contains 'Session resumed' and 'task completion loop'" "$OUTPUT"
+fi
+
+# -----------------------------------------------------------------------------
+# Test user-prompt-submit-hook.sh
+# -----------------------------------------------------------------------------
+
+run_test "user-prompt-submit-hook.sh: No output when not looper"
+
+cleanup_dr_done
+setup_dr_done
+create_state_file "other-session" 0
+OUTPUT=$(mock_hook_input "test-session" | "$PLUGIN_ROOT/scripts/user-prompt-submit-hook.sh" 2>&1) && exit_code=0 || exit_code=$?
+if [[ $exit_code -eq 0 && -z "$OUTPUT" ]]; then
+    pass "No output when not looper"
+else
+    fail "Should have no output when not looper" "empty output" "$OUTPUT"
+fi
+
+run_test "user-prompt-submit-hook.sh: Outputs reminder for stuck tasks"
+
+cleanup_dr_done
+setup_dr_done
+create_state_file "test-session" 0
+create_task_file "001-test-task.stuck.md" "Stuck task"
+
+OUTPUT=$(mock_hook_input "test-session" | "$PLUGIN_ROOT/scripts/user-prompt-submit-hook.sh" 2>&1) && exit_code=0 || exit_code=$?
+if echo "$OUTPUT" | grep -qi "stuck"; then
+    pass "Outputs reminder for stuck tasks"
+else
+    fail "Should output stuck task reminder" "contains 'stuck'" "$OUTPUT"
+fi
+
+# =============================================================================
+# Summary
+# =============================================================================
+
+echo ""
+echo "=============================================="
+echo "Test Summary"
+echo "=============================================="
+echo "Tests run:    $TESTS_RUN"
+echo "Tests passed: $TESTS_PASSED"
+echo "Tests failed: $TESTS_FAILED"
+echo ""
+
+if [[ $TESTS_FAILED -gt 0 ]]; then
+    echo "=== Test FAILED ==="
+    exit 1
+else
+    echo "=== Test PASSED ==="
+    exit 0
+fi

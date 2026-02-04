@@ -1,69 +1,53 @@
 #!/bin/bash
-# Stop hook for dr-done
-# Manages the iteration loop and decides whether to continue processing tasks
+# stop.sh - Stop the dr-done loop
+# Part of dr-done v2 plugin
+#
+# Usage: stop.sh <session_id>
+# Exit codes:
+#   0 - Success (stopped)
+#   1 - Error
+#   2 - No active looper
+#   3 - Different session is active (outputs that session ID)
 
 set -e
 
-# Get repository root
-REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
-if [[ -z "$REPO_ROOT" ]]; then
-    exit 0
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
+
+SESSION_ID="${1:-}"
+
+if [[ -z "$SESSION_ID" ]]; then
+    echo "Error: Session ID required" >&2
+    exit 1
 fi
 
-STATE_FILE="$REPO_ROOT/.claude/dr-done.local.yaml"
+init_dr_done
 
-# If state file doesn't exist, dr-done is not active - allow stop
+# Check if state file exists
 if [[ ! -f "$STATE_FILE" ]]; then
-    exit 0
+    echo "no-looper"
+    exit 2
 fi
 
-# Read YAML values (simple parsing for bash 3.2+ compatibility)
-MAX=$(grep '^max:' "$STATE_FILE" | sed 's/max:[[:space:]]*//')
-ITERATION=$(grep '^iteration:' "$STATE_FILE" | sed 's/iteration:[[:space:]]*//')
-WORKSTREAM=$(grep '^workstream:' "$STATE_FILE" | sed 's/workstream:[[:space:]]*//')
+# Read current looper
+CURRENT_LOOPER=$(jq -r '.looper // empty' "$STATE_FILE" 2>/dev/null || echo "")
 
-# Increment iteration
-NEW_ITERATION=$((ITERATION + 1))
-
-# Update state file with new iteration
-cat > "$STATE_FILE" << EOF
-max: $MAX
-iteration: $NEW_ITERATION
-workstream: $WORKSTREAM
-EOF
-
-# Check if we've exceeded max iterations
-if [[ $NEW_ITERATION -gt $MAX ]]; then
-    rm -f "$STATE_FILE"
-    echo "dr-done: Maximum iterations ($MAX) reached. Stopping."
-    exit 0
+if [[ -z "$CURRENT_LOOPER" || "$CURRENT_LOOPER" == "null" ]]; then
+    echo "no-looper"
+    exit 2
 fi
 
-# Check if all tasks are complete
-WORKSTREAM_DIR="$REPO_ROOT/.dr-done/$WORKSTREAM"
-
-if [[ ! -d "$WORKSTREAM_DIR" ]]; then
-    rm -f "$STATE_FILE"
-    exit 0
+# Check if this session is the looper
+if [[ "$CURRENT_LOOPER" != "$SESSION_ID" ]]; then
+    echo "other-session:$CURRENT_LOOPER"
+    exit 3
 fi
 
-# Find pending tasks (not .done.md or .stuck.md)
-PENDING_TASKS=$(find "$WORKSTREAM_DIR" -maxdepth 1 -name "*.md" \
-    ! -name "*.done.md" \
-    ! -name "*.stuck.md" \
-    2>/dev/null | head -1)
+# This session is the looper - stop it
+CURRENT_ITERATION=$(jq -r '.iteration // 0' "$STATE_FILE" 2>/dev/null || echo "0")
 
-if [[ -z "$PENDING_TASKS" ]]; then
-    # All tasks complete
-    rm -f "$STATE_FILE"
-    echo "dr-done: All tasks in workstream '$WORKSTREAM' are complete. Stopping."
-    exit 0
-fi
+# Update state to clear looper
+echo "{\"looper\": null, \"iteration\": $CURRENT_ITERATION}" > "$STATE_FILE"
 
-# Tasks remaining - block and continue
-cat << 'EOF'
-{
-  "decision": "block",
-  "reason": "Tasks remaining in workstream. Spawn a sub-agent to follow the instructions in .dr-done/prompt.md"
-}
-EOF
+echo "stopped"
+exit 0
