@@ -34,6 +34,5 @@ $commit_instruction
     - \`.stuck.md\` = need help
     - \`.md\` = more work needed
 $review_instruction
-- Call \`stop\`
 EOF
 }

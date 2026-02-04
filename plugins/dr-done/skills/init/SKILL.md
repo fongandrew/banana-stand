@@ -2,6 +2,7 @@
 name: init
 description: Initialize the dr-done task automation system
 context: fork
+disable-model-invocation: true
 ---
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/init.sh --with-config`
