@@ -29,9 +29,10 @@ mkdir -p "$TASKS_DIR"
 # Create .gitignore if needed
 GITIGNORE="$DR_DONE_DIR/.gitignore"
 if [[ ! -f "$GITIGNORE" ]]; then
-    echo "tasks/" > "$GITIGNORE"
-elif ! grep -q "^tasks/$" "$GITIGNORE" 2>/dev/null; then
-    echo "tasks/" >> "$GITIGNORE"
+    printf "tasks/\nstate.json\n" > "$GITIGNORE"
+else
+    grep -q "^tasks/$" "$GITIGNORE" 2>/dev/null || echo "tasks/" >> "$GITIGNORE"
+    grep -q "^state\.json$" "$GITIGNORE" 2>/dev/null || echo "state.json" >> "$GITIGNORE"
 fi
 
 # Create config.json if requested and doesn't exist
