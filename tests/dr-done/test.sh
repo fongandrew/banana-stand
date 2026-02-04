@@ -545,6 +545,75 @@ else
     fail "Should not contain commit instruction" "no 'Commit your changes'" "$OUTPUT"
 fi
 
+# -----------------------------------------------------------------------------
+# Test generate-start-instructions.sh
+# -----------------------------------------------------------------------------
+
+run_test "generate-start-instructions.sh: Error when no pending tasks"
+
+cleanup_dr_done
+setup_dr_done
+# No task files
+
+OUTPUT=$("$PLUGIN_ROOT/scripts/generate-start-instructions.sh" 2>&1) && exit_code=0 || exit_code=$?
+if [[ $exit_code -eq 0 ]] && echo "$OUTPUT" | grep -q "No pending tasks"; then
+    pass "Error when no pending tasks"
+else
+    fail "Should output error for no pending tasks" "contains 'No pending tasks'" "$OUTPUT"
+fi
+
+run_test "generate-start-instructions.sh: Inlines session ID when no looper"
+
+cleanup_dr_done
+setup_dr_done
+create_task_file "001-test-task.md" "Test task"
+export CLAUDE_SESSION_ID="test-session-abc123"
+
+OUTPUT=$("$PLUGIN_ROOT/scripts/generate-start-instructions.sh" 2>&1) && exit_code=0 || exit_code=$?
+if [[ $exit_code -eq 0 ]] && echo "$OUTPUT" | grep -q 'set-looper.sh "test-session-abc123"'; then
+    pass "Inlines session ID when no looper"
+else
+    fail "Should inline session ID in command" "contains 'set-looper.sh \"test-session-abc123\"'" "$OUTPUT"
+fi
+
+run_test "generate-start-instructions.sh: Detects resuming own loop"
+
+cleanup_dr_done
+setup_dr_done
+create_state_file "test-session-abc123" 5
+create_task_file "001-test-task.md" "Test task"
+export CLAUDE_SESSION_ID="test-session-abc123"
+
+OUTPUT=$("$PLUGIN_ROOT/scripts/generate-start-instructions.sh" 2>&1) && exit_code=0 || exit_code=$?
+if [[ $exit_code -eq 0 ]] && echo "$OUTPUT" | grep -q "resuming your own loop"; then
+    pass "Detects resuming own loop"
+else
+    fail "Should detect resuming own loop" "contains 'resuming your own loop'" "$OUTPUT"
+fi
+
+run_test "generate-start-instructions.sh: Detects different session looper"
+
+cleanup_dr_done
+setup_dr_done
+create_state_file "other-session-xyz" 5
+create_task_file "001-test-task.md" "Test task"
+export CLAUDE_SESSION_ID="test-session-abc123"
+
+OUTPUT=$("$PLUGIN_ROOT/scripts/generate-start-instructions.sh" 2>&1) && exit_code=0 || exit_code=$?
+if [[ $exit_code -eq 0 ]] && echo "$OUTPUT" | grep -q "Existing looper detected" && echo "$OUTPUT" | grep -q "other-session-xyz"; then
+    pass "Detects different session looper"
+else
+    fail "Should detect different session looper" "contains 'Existing looper detected' and 'other-session-xyz'" "$OUTPUT"
+fi
+
+run_test "generate-start-instructions.sh: Shows current session ID when different looper"
+
+if echo "$OUTPUT" | grep -q "Your session.*test-session-abc123"; then
+    pass "Shows current session ID when different looper"
+else
+    fail "Should show current session ID" "contains 'Your session' and 'test-session-abc123'" "$OUTPUT"
+fi
+
 # =============================================================================
 # Summary
 # =============================================================================

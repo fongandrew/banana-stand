@@ -11,15 +11,18 @@ source "$SCRIPT_DIR/lib/template.sh"
 # Read input from stdin
 INPUT=$(cat)
 
+# Get session ID from input and export to CLAUDE_ENV_FILE
+SESSION_ID=$(get_session_id_from_input "$INPUT")
+if [[ -n "$SESSION_ID" && -n "$CLAUDE_ENV_FILE" ]]; then
+    echo "export CLAUDE_SESSION_ID=$SESSION_ID" >> "$CLAUDE_ENV_FILE"
+fi
+
 init_dr_done
 
 # No state file = not active
 if [[ ! -f "$STATE_FILE" ]]; then
     exit 0
 fi
-
-# Get session ID from input
-SESSION_ID=$(get_session_id_from_input "$INPUT")
 if [[ -z "$SESSION_ID" ]]; then
     exit 0
 fi
