@@ -1,0 +1,1 @@
+- [ ] All items in the TaskList _must_ be completed or closed.
