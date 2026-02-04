@@ -8,6 +8,32 @@ get_next_task() {
     NEXT_TASK_TYPE=""
     NEXT_TASK_FILE=""
 
+    # Check for focused task first
+    local focus=$(get_focus)
+    if [[ -n "$focus" ]]; then
+        local focus_path="$REPO_ROOT/$focus"
+        if [[ -f "$focus_path" ]]; then
+            NEXT_TASK_FILE="$focus_path"
+            # Determine type from extension
+            if [[ "$focus" == *.review.md ]]; then
+                NEXT_TASK_TYPE="review"
+            elif [[ "$focus" == *.stuck.md ]]; then
+                NEXT_TASK_TYPE="stuck"
+            elif [[ "$focus" == *.done.md ]]; then
+                # Focused task is done, clear focus and continue
+                clear_focus
+            else
+                NEXT_TASK_TYPE="pending"
+            fi
+            if [[ -n "$NEXT_TASK_TYPE" ]]; then
+                return 0
+            fi
+        else
+            # Focus file doesn't exist, clear it
+            clear_focus
+        fi
+    fi
+
     # Check for tasks needing review first
     local review_tasks=$(find_review_tasks)
     if [[ -n "$review_tasks" ]]; then

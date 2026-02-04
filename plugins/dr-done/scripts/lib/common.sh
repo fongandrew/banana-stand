@@ -139,6 +139,52 @@ EOF
     fi
 }
 
+# Set focus to a specific task file (relative path from repo root)
+set_focus() {
+    local task_file="$1"
+    if [[ -f "$STATE_FILE" ]]; then
+        local looper=$(jq -r '.looper' "$STATE_FILE")
+        local iteration=$(jq -r '.iteration // 0' "$STATE_FILE")
+        if [[ "$looper" == "null" ]]; then
+            cat > "$STATE_FILE" << EOF
+{"looper": null, "iteration": $iteration, "focus": "$task_file"}
+EOF
+        else
+            cat > "$STATE_FILE" << EOF
+{"looper": "$looper", "iteration": $iteration, "focus": "$task_file"}
+EOF
+        fi
+    else
+        cat > "$STATE_FILE" << EOF
+{"looper": null, "iteration": 0, "focus": "$task_file"}
+EOF
+    fi
+}
+
+# Get current focus (returns empty if none)
+get_focus() {
+    if [[ -f "$STATE_FILE" ]]; then
+        jq -r '.focus // empty' "$STATE_FILE"
+    fi
+}
+
+# Clear focus
+clear_focus() {
+    if [[ -f "$STATE_FILE" ]]; then
+        local looper=$(jq -r '.looper' "$STATE_FILE")
+        local iteration=$(jq -r '.iteration // 0' "$STATE_FILE")
+        if [[ "$looper" == "null" ]]; then
+            cat > "$STATE_FILE" << EOF
+{"looper": null, "iteration": $iteration}
+EOF
+        else
+            cat > "$STATE_FILE" << EOF
+{"looper": "$looper", "iteration": $iteration}
+EOF
+        fi
+    fi
+}
+
 # Extract session_id from hook input JSON
 get_session_id_from_input() {
     local input="$1"

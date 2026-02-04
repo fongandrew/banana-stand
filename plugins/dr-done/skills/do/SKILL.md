@@ -9,4 +9,4 @@ disable-model-invocation: true
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/generate-add-instructions.sh`
 
-!`${CLAUDE_PLUGIN_ROOT}/scripts/generate-start-instructions.sh`
+!`${CLAUDE_PLUGIN_ROOT}/scripts/generate-start-instructions.sh --focus-new`
