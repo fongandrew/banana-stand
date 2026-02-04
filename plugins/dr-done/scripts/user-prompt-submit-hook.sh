@@ -19,7 +19,7 @@ if [[ -n "$stuck_tasks" ]]; then
     stuck_files=$(echo "$stuck_tasks" | xargs -I {} basename {} | tr '\n' ', ' | sed 's/,$//')
 
     echo "[dr-done] $stuck_count stuck task(s): $stuck_files"
-    echo "If user input helps resolve, rename from .stuck.md to .md."
+    echo "If user input resolves, edit task and mv from .stuck.md to .md. Do not do task unless user tells you to."
 fi
 
 exit 0
