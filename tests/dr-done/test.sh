@@ -50,6 +50,7 @@ source "$TEST_DIR/test-stop-hook.sh" "$TEST_TMP" "$PLUGIN_ROOT" "$LIB_DIR/test-h
 source "$TEST_DIR/test-session-start-hook.sh" "$TEST_TMP" "$PLUGIN_ROOT" "$LIB_DIR/test-helpers.sh" "$LIB_DIR/dr-done-helpers.sh"
 source "$TEST_DIR/test-other-hooks.sh" "$TEST_TMP" "$PLUGIN_ROOT" "$LIB_DIR/test-helpers.sh" "$LIB_DIR/dr-done-helpers.sh"
 source "$TEST_DIR/test-helper-scripts.sh" "$TEST_TMP" "$PLUGIN_ROOT" "$LIB_DIR/test-helpers.sh" "$LIB_DIR/dr-done-helpers.sh"
+source "$TEST_DIR/test-non-git.sh" "$TEST_TMP" "$PLUGIN_ROOT" "$LIB_DIR/test-helpers.sh" "$LIB_DIR/dr-done-helpers.sh"
 
 # Print summary
 print_summary

@@ -2,19 +2,35 @@
 # common.sh - Shared functions for dr-done v2 plugin
 # Part of dr-done v2 plugin
 
-# Get repository root
+# Get repository root (git or non-git)
+# If in a git repo, use git root. Otherwise, search upward for .dr-done directory.
+# If no .dr-done found, use current directory.
 get_repo_root() {
-    git rev-parse --show-toplevel 2>/dev/null
+    # Try git first
+    local git_root=$(git rev-parse --show-toplevel 2>/dev/null)
+    if [[ -n "$git_root" ]]; then
+        echo "$git_root"
+        return 0
+    fi
+
+    # Not a git repo - search upward for .dr-done directory
+    local dir="$PWD"
+    while [[ "$dir" != "/" ]]; do
+        if [[ -d "$dir/.dr-done" ]]; then
+            echo "$dir"
+            return 0
+        fi
+        dir=$(dirname "$dir")
+    done
+
+    # No .dr-done found - use current directory
+    echo "$PWD"
 }
 
 # Initialize common variables
 # Call this at the start of each script that sources common.sh
 init_dr_done() {
     REPO_ROOT=$(get_repo_root)
-    if [[ -z "$REPO_ROOT" ]]; then
-        echo "Error: Not in a git repository" >&2
-        return 1
-    fi
 
     DR_DONE_DIR="$REPO_ROOT/.dr-done"
     TASKS_DIR="$DR_DONE_DIR/tasks"
@@ -85,8 +101,15 @@ find_stuck_tasks() {
 }
 
 # Check for uncommitted changes (excluding .dr-done/ directory)
+# Returns 0 (true) if there are uncommitted changes, 1 (false) otherwise
+# In non-git repos, always returns 1 (false - no uncommitted changes)
 has_uncommitted_changes() {
-    git status --porcelain 2>/dev/null | grep -v "^.. .dr-done/" | grep -q .
+    # Only check git status if we're in a git repo
+    if git rev-parse --git-dir >/dev/null 2>&1; then
+        git status --porcelain 2>/dev/null | grep -v "^.. .dr-done/" | grep -q .
+    else
+        return 1
+    fi
 }
 
 # Check if session is the current looper
