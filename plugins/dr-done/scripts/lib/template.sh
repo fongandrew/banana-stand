@@ -95,7 +95,8 @@ build_pending_prompt() {
     cat << EOF
 Work on this task: $task_file
 
-- Re-read file if needed.
+- If you have previously read this file, re-read it. It may have changed.
+- If the task is complicated, use task tools to track subtasks.
 - Check TaskList tool for existing open subtasks.
 - Do a meaningful amount of work.
 - Append work summary to the file, then rename:
