@@ -71,13 +71,13 @@ for TEST_SCRIPT in $CASES; do
 
     if [[ $EXIT_CODE -eq 0 ]]; then
         echo "PASSED: $CASE_NAME"
-        ((PASSED++))
+        PASSED=$((PASSED + 1))
     else
         echo "FAILED: $CASE_NAME"
         if [[ $EXIT_CODE -eq 124 ]]; then
             echo "(timed out after ${TIMEOUT}s)"
         fi
-        ((FAILED++))
+        FAILED=$((FAILED + 1))
     fi
 
     echo ""
