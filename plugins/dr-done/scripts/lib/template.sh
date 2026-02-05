@@ -98,7 +98,7 @@ Work on this task: $task_file
 - If the task is complicated, use task tools to track subtasks.
 - Check TaskList tool for existing open subtasks.
 - Do a meaningful amount of work.
-- Append work summary to the file, then rename:
+- Append work summary to the file, then rename extension:
     - \`$done_extension\` = complete
     - \`.stuck.md\` = need help
     - \`.md\` = more work needed
