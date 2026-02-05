@@ -27,6 +27,7 @@ Unlike Ralph Wiggum, it does not rely on the agent responding with a completion 
 - `/dr-done:start` - Start working on the tasks in the queue, beginning with the oldest first (or however the tasks are lexographically sorted in `.dr-done/tasks`)
 - `/dr-done:stop` - Stop working on tasks. The plugin will stop automatically when all tasks are done or stuck, but you can use this to force it.
 - `/dr-done:unstick` - Rename all `.stuck.md` tasks to just `.md`. See below.
+- `/dr-done:cleanup [criteria]` - Clean up old tasks from the queue. Defaults to cleaning up all done tasks. Supports criteria like "stuck", "review", "all", or time-based like "older than 7 days".
 
 ## Task List
 
