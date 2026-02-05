@@ -1,7 +1,7 @@
 {
   "name": "dr-done",
   "description": "Single-queue task automation with review workflow",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": {
     "name": "Andrew Fong"
   }
