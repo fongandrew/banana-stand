@@ -38,18 +38,20 @@ init_dr_done() {
 }
 
 # Read configuration with defaults
-# Returns: gitCommit, maxIterations, review as global variables
+# Returns: gitCommit, maxIterations, review, stuckReminder as global variables
 read_config() {
     # Defaults
     CONFIG_GIT_COMMIT=true
     CONFIG_MAX_ITERATIONS=50
     CONFIG_REVIEW=true
+    CONFIG_STUCK_REMINDER=true
 
     if [[ -f "$CONFIG_FILE" ]]; then
         # Note: Don't use jq's // operator for booleans - it treats false as falsy
         local git_commit=$(jq -r '.gitCommit | if . == null then "true" else . end' "$CONFIG_FILE")
         local max_iter=$(jq -r '.maxIterations // 50' "$CONFIG_FILE")
         local review=$(jq -r '.review | if . == null then "true" else . end' "$CONFIG_FILE")
+        local stuck_reminder=$(jq -r '.stuckReminder | if . == null then "true" else . end' "$CONFIG_FILE")
 
         if [[ "$git_commit" == "false" ]]; then
             CONFIG_GIT_COMMIT=false
@@ -59,6 +61,9 @@ read_config() {
         fi
         if [[ "$review" == "false" ]]; then
             CONFIG_REVIEW=false
+        fi
+        if [[ "$stuck_reminder" == "false" ]]; then
+            CONFIG_STUCK_REMINDER=false
         fi
     fi
 }

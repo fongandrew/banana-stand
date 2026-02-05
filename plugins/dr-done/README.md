@@ -72,3 +72,4 @@ Configuration is stored in `.dr-done/config.json`:
 | `gitCommit` | `true` | Require Git commits after completing each task |
 | `maxIterations` | `50` | Maximum number of loop iterations before automatically stopping |
 | `review` | `true` | Enable review workflow where tasks transition to `.review.md` for validation |
+| `stuckReminder` | `true` | Inject reminders about stuck tasks on user prompt submission (helps with auto-unsticking based on user input) |

@@ -40,7 +40,8 @@ if [[ "$WITH_CONFIG" == "true" && ! -f "$CONFIG_FILE" ]]; then
 {
   "gitCommit": true,
   "maxIterations": 50,
-  "review": true
+  "review": true,
+  "stuckReminder": true
 }
 EOF
 fi

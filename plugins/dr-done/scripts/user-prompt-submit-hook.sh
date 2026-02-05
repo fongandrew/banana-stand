@@ -11,6 +11,14 @@ INPUT=$(cat)
 
 init_dr_done
 
+# Read config to check if stuck task reminders are enabled
+read_config
+
+# Exit early if stuck task reminders are disabled
+if [[ "$CONFIG_STUCK_REMINDER" == "false" ]]; then
+    exit 0
+fi
+
 # Check for stuck tasks (always, regardless of looper session)
 stuck_tasks=$(find_stuck_tasks)
 if [[ -n "$stuck_tasks" ]]; then
