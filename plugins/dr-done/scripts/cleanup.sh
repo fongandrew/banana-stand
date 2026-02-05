@@ -30,6 +30,9 @@ fi
 count=0
 files_cleaned=()
 
+# Temporarily disable set -e for trash fallback logic
+set +e
+
 # Process all arguments (expand globs)
 for pattern in "$@"; do
     # Expand glob pattern
@@ -49,6 +52,9 @@ for pattern in "$@"; do
         fi
     done
 done
+
+# Re-enable set -e
+set -e
 
 # Report results
 if [[ $count -eq 0 ]]; then
