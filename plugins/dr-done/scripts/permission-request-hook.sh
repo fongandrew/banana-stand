@@ -33,7 +33,24 @@ if ! is_looper "$SESSION_ID"; then
 fi
 
 # We are the looper - deny the permission request
-cat << 'EOF'
+TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty')
+
+# Special case for web tools - simpler message without alternatives
+# to avoid using sandboxed curl and triggering permission request
+if [[ "$TOOL_NAME" == "WebFetch" || "$TOOL_NAME" == "WebSearch" ]]; then
+    cat << 'EOF'
+{
+  "hookSpecificOutput": {
+    "hookEventName": "PermissionRequest",
+    "decision": {
+      "behavior": "deny",
+      "message": "This dr-done loop is running autonomously and cannot access the web.\n\nTry to complete the task without accessing this domain, or mark the task as .stuck.md if web access is required."
+    }
+  }
+}
+EOF
+else
+    cat << 'EOF'
 {
   "hookSpecificOutput": {
     "hookEventName": "PermissionRequest",
@@ -44,3 +61,4 @@ cat << 'EOF'
   }
 }
 EOF
+fi
