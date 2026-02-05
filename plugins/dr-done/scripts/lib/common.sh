@@ -223,3 +223,22 @@ output_block() {
 {"decision": "block", "reason": $escaped_reason}
 EOF
 }
+
+# Debug logging to shared session log
+log_debug() {
+    # Only log if DR_DONE_DEBUG is set
+    [[ -z "$DR_DONE_DEBUG" ]] && return
+
+    local session_id="$1"
+    shift
+    local message="$*"
+
+    # Skip logging if no session ID
+    [[ -z "$session_id" ]] && return
+
+    local log_dir="${TMPDIR:-/tmp}claude-dr-done"
+    mkdir -p "$log_dir" 2>/dev/null
+    local log_file="$log_dir/${session_id}.log"
+
+    echo "[$(date +%H:%M:%S)] $message" >> "$log_file" 2>/dev/null || true
+}

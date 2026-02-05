@@ -15,25 +15,29 @@ INPUT=$(cat)
 
 init_dr_done
 
+# Get session ID from input
+SESSION_ID=$(get_session_id_from_input "$INPUT")
+
 # No state file = not in autonomous mode, allow permission request
 if [[ ! -f "$STATE_FILE" ]]; then
+    log_debug "$SESSION_ID" "permission: no state file, allowing"
     exit 0
 fi
 
-# Get session ID from input
-SESSION_ID=$(get_session_id_from_input "$INPUT")
 if [[ -z "$SESSION_ID" ]]; then
-    # No session ID means we can't check looper status, allow request
+    log_debug "$SESSION_ID" "permission: no session ID, allowing"
     exit 0
 fi
 
 # Not the looper = allow permission request
 if ! is_looper "$SESSION_ID"; then
+    log_debug "$SESSION_ID" "permission: not looper, allowing"
     exit 0
 fi
 
 # We are the looper - deny the permission request
 TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty')
+log_debug "$SESSION_ID" "permission: denied $TOOL_NAME (looper mode)"
 
 # Special case for web tools - simpler message without alternatives
 # to avoid using sandboxed curl and triggering permission request
