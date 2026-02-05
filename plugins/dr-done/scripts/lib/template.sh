@@ -104,5 +104,6 @@ Work on this task: $task_file
     - \`.md\` = more work needed
 $commit_instruction
 $review_instruction
+- Then wait for next task
 EOF
 }
