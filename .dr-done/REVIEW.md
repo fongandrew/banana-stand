@@ -1,1 +1,3 @@
 - [ ] All items in the TaskList _must_ be completed or closed.
+- [ ] Changes to skills or configs should be reflected in README.md
+- [ ] Significant user-facing changes should be noted in CHANGELOG.md (under unreleased section)
