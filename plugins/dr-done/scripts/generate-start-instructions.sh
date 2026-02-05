@@ -45,11 +45,11 @@ fi
 
 # Generate set-focus instruction for --focus-new mode
 if [[ "$FOCUS_NEW" == "true" ]]; then
-    cat << 'EOF'
+    cat << EOF
 After creating the task file, set focus to it:
-```bash
-plugins/dr-done/scripts/set-focus.sh <the-file-you-created>
-```
+\`\`\`bash
+$SCRIPT_DIR/set-focus.sh <the-file-you-created>
+\`\`\`
 
 EOF
 fi
@@ -60,7 +60,7 @@ if [[ -z "$CURRENT_LOOPER" || "$CURRENT_LOOPER" == "null" ]]; then
     cat << EOF
 Run:
 \`\`\`bash
-plugins/dr-done/scripts/set-looper.sh "$CLAUDE_SESSION_ID"
+$SCRIPT_DIR/set-looper.sh "$CLAUDE_SESSION_ID"
 \`\`\`
 
 Then follow this prompt:
@@ -74,7 +74,7 @@ You are resuming your own loop.
 
 First, reset iteration count:
 \`\`\`bash
-plugins/dr-done/scripts/set-looper.sh "$CLAUDE_SESSION_ID"
+$SCRIPT_DIR/set-looper.sh "$CLAUDE_SESSION_ID"
 \`\`\`
 
 Then follow this prompt:
@@ -95,7 +95,7 @@ Another session is registered as the active looper. Use the AskUserQuestion tool
 
 Run:
 \`\`\`bash
-plugins/dr-done/scripts/set-looper.sh "$CLAUDE_SESSION_ID"
+$SCRIPT_DIR/set-looper.sh "$CLAUDE_SESSION_ID"
 \`\`\`
 
 Then follow this prompt:
