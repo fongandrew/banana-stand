@@ -5,7 +5,7 @@
   },
   "metadata": {
     "description": "Claude Code plugins for autonomous task automation",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "pluginRoot": "./plugins"
   },
   "plugins": [
@@ -13,7 +13,7 @@
       "name": "dr-done",
       "source": "./plugins/dr-done",
       "description": "Alternative to Ralph Loop with task queue, auto-commits, subagent reviews, and permission handling",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "author": {
         "name": "Andrew Fong"
       },
