@@ -1,6 +1,5 @@
 #!/bin/bash
 # find-tasks.sh - Find tasks by type
-# Part of dr-done v2 plugin
 #
 # Usage: find-tasks.sh <type> [--limit N]
 #   type: pending, review, done, stuck, all

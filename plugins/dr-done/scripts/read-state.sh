@@ -1,6 +1,5 @@
 #!/bin/bash
 # read-state.sh - Read dr-done state with fallback
-# Part of dr-done v2 plugin
 #
 # Usage: read-state.sh
 # Output: JSON state object (or default if no state file)

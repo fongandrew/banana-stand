@@ -1,6 +1,5 @@
 #!/bin/bash
 # generate-loop-prompt.sh - Generate the main loop prompt for the next task
-# Part of dr-done v2 plugin
 #
 # This outputs the exact same prompt used by stop-hook.sh and session-start-hook.sh
 

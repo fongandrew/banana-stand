@@ -1,6 +1,5 @@
 #!/bin/bash
 # permission-request-hook.sh - Auto-deny permission requests in autonomous mode
-# Part of dr-done v2 plugin
 #
 # When the session is the active looper, permission requests are denied
 # to keep the autonomous loop running without human intervention.

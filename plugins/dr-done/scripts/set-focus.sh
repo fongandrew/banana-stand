@@ -1,6 +1,5 @@
 #!/bin/bash
 # set-focus.sh - Set focus to a specific task file
-# Part of dr-done v2 plugin
 #
 # Usage: set-focus.sh <task-file>
 #

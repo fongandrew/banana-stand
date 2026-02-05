@@ -4,7 +4,7 @@
     "name": "Andrew Fong"
   },
   "metadata": {
-    "description": "Unfortunately, the money is in another banana stand.",
+    "description": "Claude Code plugins for autonomous task automation",
     "version": "1.0.0",
     "pluginRoot": "./plugins"
   },
@@ -12,12 +12,15 @@
     {
       "name": "dr-done",
       "source": "./plugins/dr-done",
-      "description": "File-based task decomposition and execution for workstreams",
+      "description": "Alternative to Ralph Loop with task queue, auto-commits, subagent reviews, and permission handling",
       "version": "1.0.0",
       "author": {
         "name": "Andrew Fong"
       },
-      "keywords": ["tasks", "workstream", "automation", "decomposition"]
+      "repository": "https://github.com/fongandrew/banana-stand",
+      "homepage": "https://github.com/fongandrew/banana-stand/tree/main/plugins/dr-done",
+      "keywords": ["tasks", "automation", "ralph-loop", "queue", "review", "git", "autonomous"],
+      "category": "productivity"
     }
   ]
 }

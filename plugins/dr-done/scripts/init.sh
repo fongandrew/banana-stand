@@ -1,6 +1,5 @@
 #!/bin/bash
 # init.sh - Initialize dr-done directory structure
-# Part of dr-done v2 plugin
 #
 # Usage: init.sh [--with-config]
 #   --with-config: Also create config.json with defaults (if it doesn't exist)

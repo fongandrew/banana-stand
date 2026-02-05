@@ -1,6 +1,5 @@
 #!/bin/bash
 # unstick.sh - Rename all stuck tasks back to pending
-# Part of dr-done v2 plugin
 #
 # Outputs the count of files unstuck
 

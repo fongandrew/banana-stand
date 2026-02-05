@@ -1,6 +1,5 @@
 #!/bin/bash
-# template.sh - Template functions for dr-done v2 plugin
-# Part of dr-done v2 plugin
+# template.sh - Template functions for dr-done plugin
 
 # Get the next task info
 # Sets NEXT_TASK_TYPE (review|pending|stuck|complete) and NEXT_TASK_FILE

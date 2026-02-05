@@ -1,6 +1,5 @@
 #!/bin/bash
 # stop-hook.sh - Stop hook for main loop control
-# Part of dr-done v2 plugin
 
 set -e
 

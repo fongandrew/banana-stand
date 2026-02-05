@@ -1,6 +1,5 @@
 #!/bin/bash
 # stop.sh - Stop the dr-done loop
-# Part of dr-done v2 plugin
 #
 # Usage: stop.sh <session_id>
 # Exit codes:

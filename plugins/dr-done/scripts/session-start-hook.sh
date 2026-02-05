@@ -1,6 +1,5 @@
 #!/bin/bash
 # session-start-hook.sh - Re-inject loop prompt on session resume
-# Part of dr-done v2 plugin
 
 set -e
 

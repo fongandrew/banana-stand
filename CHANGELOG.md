@@ -1,0 +1,17 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+- Initial release of dr-done plugin with single-queue task automation:
+    - `/dr-done:init` command to initialize the system
+    - `/dr-done:add` command to add new tasks
+    - `/dr-done:start` command to begin processing queue
+    - `/dr-done:do <prompt>` command for specific task work
+    - `/dr-done:stop` command to stop processing
+    - `/dr-done:unstick` command to recover stuck tasks

@@ -1,6 +1,5 @@
 #!/bin/bash
 # user-prompt-submit-hook.sh - Remind agent of stuck tasks
-# Part of dr-done v2 plugin
 
 set -e
 

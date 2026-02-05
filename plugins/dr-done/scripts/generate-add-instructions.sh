@@ -1,6 +1,5 @@
 #!/bin/bash
 # generate-add-instructions.sh - Generate instructions for adding a task
-# Part of dr-done v2 plugin
 
 set -e
 

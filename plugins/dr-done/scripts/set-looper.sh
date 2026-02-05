@@ -1,6 +1,5 @@
 #!/bin/bash
 # set-looper.sh - Set the current session as the looper
-# Part of dr-done v2 plugin
 #
 # Usage: set-looper.sh <session_id>
 #

@@ -1,6 +1,5 @@
 #!/bin/bash
 # generate-start-instructions.sh - Generate instructions for starting the loop
-# Part of dr-done v2 plugin
 #
 # Usage: generate-start-instructions.sh [--focus-new]
 #

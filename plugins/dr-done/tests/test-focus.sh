@@ -1,6 +1,5 @@
 #!/bin/bash
 # test-focus.sh - Unit tests for focus functionality
-# Part of dr-done v2 plugin
 
 set -e
 

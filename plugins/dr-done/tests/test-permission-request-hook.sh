@@ -1,6 +1,5 @@
 #!/bin/bash
 # test-permission-request-hook.sh - Unit tests for permission-request-hook.sh
-# Part of dr-done v2 plugin
 
 set -e
 

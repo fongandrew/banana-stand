@@ -1,6 +1,5 @@
 #!/bin/bash
-# common.sh - Shared functions for dr-done v2 plugin
-# Part of dr-done v2 plugin
+# common.sh - Shared functions for dr-done plugin
 
 # Get repository root (git or non-git)
 # If in a git repo, use git root. Otherwise, search upward for .dr-done directory.
