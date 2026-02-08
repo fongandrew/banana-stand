@@ -1,5 +1,11 @@
 # dr-done
 
+---
+
+**Note:** I currently recommmend using the [CLI version of Dr. Done](https://github.com/fongandrew/dr-done) instead of the plugin.
+
+---
+
 An alternative to the [Ralph Wiggum plugin](https://github.com/anthropics/claude-code/blob/main/plugins/ralph-wiggum/README.md) for long-running autonomous loops ("Ralph Loops") in Claude Code.
 
 Like Ralph Wiggum, it uses stop hooks to create long-running autonomous sessions, but adds queued prompts, automatic git commits, subagent reviews, and permission handling for smoother operation.
